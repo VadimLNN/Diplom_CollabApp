@@ -1,14 +1,13 @@
 // src/features/tabs/board/BoardEditor.jsx
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Tldraw, createTLStore } from "tldraw";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { Excalidraw } from "@excalidraw/excalidraw";
 import { HocuspocusProvider } from "@hocuspocus/provider";
 import styles from "./BoardEditor.module.css";
-import "tldraw/tldraw.css";
+import "@excalidraw/excalidraw/index.css";
 
-/* ===========================
-   Provider cache (как в TextEditor)
-=========================== */
 const providerCache = new Map();
+
+const LOCAL_ORIGIN = "local-excalidraw-change";
 
 function getProvider(tabId, docName) {
     if (!providerCache.has(tabId)) {
@@ -16,168 +15,184 @@ function getProvider(tabId, docName) {
             url: import.meta.env.VITE_WS_URL,
             name: docName,
         });
+
         providerCache.set(tabId, provider);
     }
+
     return providerCache.get(tabId);
 }
 
-/* ===========================
-   Persistent record types
-   (то, что можно шарить)
-=========================== */
-const PERSISTENT_TYPES = new Set(["document", "page", "shape", "asset", "binding"]);
+function cloneJson(value) {
+    return JSON.parse(JSON.stringify(value));
+}
+
+function getCleanAppState(appState) {
+    return {
+        viewBackgroundColor: appState.viewBackgroundColor,
+
+        currentItemStrokeColor: appState.currentItemStrokeColor,
+        currentItemBackgroundColor: appState.currentItemBackgroundColor,
+        currentItemFillStyle: appState.currentItemFillStyle,
+        currentItemStrokeWidth: appState.currentItemStrokeWidth,
+        currentItemStrokeStyle: appState.currentItemStrokeStyle,
+        currentItemRoughness: appState.currentItemRoughness,
+        currentItemOpacity: appState.currentItemOpacity,
+
+        currentItemFontFamily: appState.currentItemFontFamily,
+        currentItemFontSize: appState.currentItemFontSize,
+        currentItemTextAlign: appState.currentItemTextAlign,
+
+        currentItemStartArrowhead: appState.currentItemStartArrowhead,
+        currentItemEndArrowhead: appState.currentItemEndArrowhead,
+    };
+}
 
 export default function BoardEditor({ tab }) {
     const [connected, setConnected] = useState(false);
-    const [editor, setEditor] = useState(null);
+    const [apiReady, setApiReady] = useState(false);
+    const [synced, setSynced] = useState(false);
 
-    /* ===========================
-     Hocuspocus provider
-  =========================== */
+    const excalidrawAPIRef = useRef(null);
+    const applyingRemoteRef = useRef(false);
+    const initialSceneAppliedRef = useRef(false);
+
     const provider = useMemo(() => {
         if (!tab?.ydoc_document_name) return null;
         return getProvider(tab.id, tab.ydoc_document_name);
     }, [tab?.id, tab?.ydoc_document_name]);
 
+    const ydoc = provider?.document ?? null;
+
+    const sceneMap = useMemo(() => {
+        if (!ydoc) return null;
+        return ydoc.getMap("excalidraw_scene");
+    }, [ydoc]);
+
+    const applySceneFromYjs = useCallback(() => {
+        const excalidrawAPI = excalidrawAPIRef.current;
+
+        if (!excalidrawAPI || !sceneMap) return;
+
+        // ВАЖНО:
+        // если сцены ещё нет, ничего не применяем.
+        // Иначе мы сами стираем свежесозданную фигуру пустым массивом.
+        if (!sceneMap.has("elements")) return;
+
+        const elements = sceneMap.get("elements") || [];
+        const appState = sceneMap.get("appState") || {};
+
+        applyingRemoteRef.current = true;
+
+        excalidrawAPI.updateScene({
+            elements,
+            appState: {
+                ...appState,
+                collaborators: new Map(),
+            },
+        });
+
+        // Excalidraw может вызвать onChange после updateScene.
+        // Поэтому флаг снимаем не сразу, а на следующем тике.
+        setTimeout(() => {
+            applyingRemoteRef.current = false;
+        }, 0);
+    }, [sceneMap]);
+
     useEffect(() => {
         if (!provider) return;
 
         const onStatus = ({ status }) => {
-            setConnected(status === "connected");
+            const isConnected = status === "connected";
+            setConnected(isConnected);
             console.log("[Board] Hocuspocus:", status);
         };
 
-        provider.on("status", onStatus);
-        return () => provider.off("status", onStatus);
-    }, [provider]);
-
-    /* ===========================
-     tldraw store
-  =========================== */
-    const store = useMemo(() => createTLStore(), []);
-
-    /* ===========================
-     Yjs map с records
-  =========================== */
-    const ydoc = provider?.document ?? null;
-    const recordsMap = ydoc ? ydoc.getMap("tldraw_records") : null;
-
-    /* ===========================
-     Echo protection
-  =========================== */
-    const applyingRemoteRef = useRef(false);
-
-    /* ===========================
-     INIT: load all records from Yjs
-  =========================== */
-    useEffect(() => {
-        if (!editor || !recordsMap) return;
-
-        if (recordsMap.size === 0) return;
-
-        applyingRemoteRef.current = true;
-
-        editor.store.mergeRemoteChanges(() => {
-            const records = [];
-            recordsMap.forEach((value) => {
-                if (value) records.push(value);
-            });
-            if (records.length) {
-                editor.store.put(records);
-            }
-        });
-
-        applyingRemoteRef.current = false;
-    }, [editor, recordsMap]);
-
-    /* ===========================
-     REMOTE → LOCAL (Yjs → tldraw)
-  =========================== */
-    useEffect(() => {
-        if (!editor || !recordsMap) return;
-
-        const onRemoteChange = (events) => {
-            if (applyingRemoteRef.current) return;
-
-            applyingRemoteRef.current = true;
-
-            editor.store.mergeRemoteChanges(() => {
-                events.forEach((event) => {
-                    event.changes.keys.forEach((change, key) => {
-                        if (change.action === "delete") {
-                            editor.store.remove([key]);
-                        } else {
-                            const record = recordsMap.get(key);
-                            if (record) editor.store.put([record]);
-                        }
-                    });
-                });
-            });
-
-            applyingRemoteRef.current = false;
+        const onSynced = () => {
+            console.log("[Board] Hocuspocus synced");
+            setSynced(true);
         };
 
-        recordsMap.observeDeep(onRemoteChange);
-        return () => recordsMap.unobserveDeep(onRemoteChange);
-    }, [editor, recordsMap]);
+        provider.on("status", onStatus);
+        provider.on("synced", onSynced);
 
-    /* ===========================
-     LOCAL → REMOTE (tldraw → Yjs)
-  =========================== */
+        return () => {
+            provider.off("status", onStatus);
+            provider.off("synced", onSynced);
+        };
+    }, [provider]);
+
+    // Первичная загрузка сохранённой сцены.
     useEffect(() => {
-        if (!editor || !recordsMap) return;
+        if (!apiReady || !sceneMap || initialSceneAppliedRef.current) return;
 
-        // 🔥 как в доках tldraw: можно фильтровать по source/scope, чтобы не ловить лишнее
-        // editor.store.listen(handler, { source: 'user', scope: 'all' }) :contentReference[oaicite:1]{index=1}
-        const unsubscribe = editor.store.listen(
-            (change) => {
-                if (applyingRemoteRef.current) return;
-                if (change.source === "remote") return;
+        // Если provider уже успел синхронизироваться — применяем.
+        // Если synced event не пришёл, connected тоже подходит как fallback.
+        if (!synced && !connected) return;
 
-                const { added, updated, removed } = change.changes;
+        applySceneFromYjs();
+        initialSceneAppliedRef.current = true;
+    }, [apiReady, synced, connected, sceneMap, applySceneFromYjs]);
 
-                // added: object { [id]: record }
-                for (const record of Object.values(added)) {
-                    if (PERSISTENT_TYPES.has(record.typeName)) {
-                        recordsMap.set(record.id, record);
-                    }
-                }
+    // REMOTE → LOCAL
+    useEffect(() => {
+        if (!apiReady || !sceneMap) return;
 
-                // updated: object { [id]: [from, to] }
-                for (const pair of Object.values(updated)) {
-                    const to = pair?.[1];
-                    if (to && PERSISTENT_TYPES.has(to.typeName)) {
-                        recordsMap.set(to.id, to);
-                    }
-                }
+        const onRemoteChange = (event, transaction) => {
+            // Ключевой фикс:
+            // не применяем изменения, которые сами же только что записали.
+            if (transaction.origin === LOCAL_ORIGIN) return;
 
-                // removed: object { [id]: record }
-                for (const record of Object.values(removed)) {
-                    if (record?.id) {
-                        recordsMap.delete(record.id);
-                    }
-                }
-            },
-            // 🔥 фильтр как в примере tldraw: слушаем только изменения от пользователя
-            { source: "user", scope: "all" },
-        );
+            if (applyingRemoteRef.current) return;
 
-        return () => unsubscribe();
-    }, [editor, recordsMap]);
+            applySceneFromYjs();
+        };
 
-    /* ===========================
-     UI
-  =========================== */
+        sceneMap.observe(onRemoteChange);
+
+        return () => {
+            sceneMap.unobserve(onRemoteChange);
+        };
+    }, [apiReady, sceneMap, applySceneFromYjs]);
+
+    // LOCAL → REMOTE
+    const handleChange = useCallback(
+        (elements, appState) => {
+            if (!ydoc || !sceneMap) return;
+            if (applyingRemoteRef.current) return;
+
+            const cleanElements = cloneJson(elements);
+            const cleanAppState = getCleanAppState(appState);
+
+            ydoc.transact(() => {
+                sceneMap.set("elements", cleanElements);
+                sceneMap.set("appState", cleanAppState);
+                sceneMap.set("updatedAt", Date.now());
+            }, LOCAL_ORIGIN);
+        },
+        [ydoc, sceneMap]
+    );
+
     if (!provider) {
         return <div className={styles.loading}>🔄 Initializing board…</div>;
     }
 
     return (
         <div className={styles.container}>
-            <span className={connected ? styles.connected : styles.disconnected}>{connected ? "🟢 Connected" : "🔴 Disconnected"}</span>
+            <span className={connected ? styles.connected : styles.disconnected}>
+                {connected ? "🟢 Connected" : "🔴 Disconnected"}
+            </span>
 
             <div className={styles.board}>
-                <Tldraw store={store} onMount={(ed) => setEditor(ed)} />
+                <Excalidraw
+                    excalidrawAPI={(api) => {
+                        if (!excalidrawAPIRef.current) {
+                            excalidrawAPIRef.current = api;
+                            setApiReady(true);
+                        }
+                    }}
+                    onChange={handleChange}
+                    theme="dark"
+                />
             </div>
         </div>
     );

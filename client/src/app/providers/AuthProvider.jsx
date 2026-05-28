@@ -13,6 +13,7 @@ const getStoredToken = () => {
         const token = localStorage.getItem("token");
         if (token) {
             // Простая проверка на срок годности токена
+            console.log("LOGIN RESPONSE:", response.data);
             const decoded = jwtDecode(token);
             if (decoded.exp * 1000 > Date.now()) {
                 return token;
