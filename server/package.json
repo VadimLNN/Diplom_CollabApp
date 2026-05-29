@@ -7,6 +7,8 @@
         "dev": "nodemon server.js",
         "test": "jest --runInBand",
         "db:init": "node scripts/initDb.js",
+        "hocuspocus": "node scripts/startHocuspocus.js",
+        "dev:hocuspocus": "nodemon scripts/startHocuspocus.js",
         "scan:unused": "knip",
         "scan:deps": "depcheck",
         "scan:cycles": "madge --circular --extensions js .",

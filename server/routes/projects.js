@@ -9,90 +9,18 @@ const { hasRole } = require("../middleware/checkRole");
 const projectService = require("../services/projectService");
 const tabService = require("../services/tabService");
 
+const asyncHandler = require("../utils/asyncHandler");
+
+const validate = require("../middleware/validate");
+const { validateProjectId } = require("../validators/commonValidators");
+const { createTabValidator } = require("../validators/tabValidators");
+
 router.use(authMiddleware);
 
-/**
- * @swagger
- * tags:
- *   name: Projects
- *   description: Управление проектами
- */
-
-/**
- * @swagger
- * components:
- *   schemas:
- *     Project:
- *       type: object
- *       required:
- *         - id
- *         - name
- *         - owner_id
- *       properties:
- *         id:
- *           type: integer
- *           description: Уникальный идентификатор проекта.
- *         name:
- *           type: string
- *           description: Название проекта.
- *         description:
- *           type: string
- *           description: Описание проекта.
- *         owner_id:
- *           type: integer
- *           description: ID пользователя-владельца.
- *         created_at:
- *           type: string
- *           format: date-time
- *           description: Дата создания проекта.
- *       example:
- *         id: 1
- *         name: "My First Project"
- *         description: "This is a sample project for the documentation."
- *         owner_id: 123
- *         created_at: "2024-01-01T12:00:00.000Z"
- */
-
-/**
- * @swagger
- * /api/projects:
- *   post:
- *     summary: Создание нового проекта
- *     tags: [Projects]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - name
- *             properties:
- *               name:
- *                 type: string
- *                 example: "New Marketing Campaign"
- *               description:
- *                 type: string
- *                 example: "Details about Q3 campaign"
- *     responses:
- *       201:
- *         description: Проект успешно создан.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Project'
- *       400:
- *         description: Ошибка валидации.
- *       401:
- *         description: Неавторизован.
- */
 // CREATE
 router.post(
     "/",
     [
-        // ✅ ВСЕ middleware в МАССИВЕ []
         body("name")
             .trim()
             .notEmpty()
@@ -100,8 +28,6 @@ router.post(
             .isLength({ max: 100 })
             .withMessage("Max 100 chars"),
         body("description").optional().trim().isLength({ max: 500 }),
-
-        // ✅ НЕТ запятой здесь! Обработчик после массива
     ],
     async (req, res) => {
         const errors = validationResult(req);
@@ -122,125 +48,32 @@ router.post(
     },
 );
 
-/**
- * @swagger
- * /api/projects:
- *   get:
- *     summary: Получение списка всех доступных проектов (своих и расшаренных)
- *     tags: [Projects]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Список проектов.
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Project'
- *       401:
- *         description: Неавторизован.
- */
 // READ (ALL)
-router.get("/", async (req, res) => {
-    try {
+router.get(
+    "/",
+    asyncHandler(async (req, res) => {
         const projects = await projectService.getAllProjectsForUser(
             req.user.id,
         );
         res.json(projects);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Failed to fetch projects" });
-    }
-});
+    }),
+);
 
-/**
- * @swagger
- * /api/projects/{id}:
- *   get:
- *     summary: Получение информации о конкретном проекте
- *     tags: [Projects]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: integer
- *         required: true
- *         description: ID проекта
- *     responses:
- *       200:
- *         description: Данные проекта.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Project'
- *       403:
- *         description: Доступ запрещен.
- *       404:
- *         description: Проект не найден.
- */
 // READ (ONE)
-router.get("/:id", checkProjectAccess, async (req, res) => {
-    try {
+router.get(
+    "/:id",
+    checkProjectAccess,
+    asyncHandler(async (req, res) => {
         const project = await projectService.getProjectById(req.params.id);
-        if (!project) {
-            // Эта проверка нужна, если проект был удален после проверки доступа
-            return res.status(404).json({ error: "Project not found." });
-        }
-        res.json(project);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Failed to fetch project" });
-    }
-});
 
-/**
- * @swagger
- * /api/projects/{id}:
- *   put:
- *     summary: Обновление проекта (доступно только владельцу)
- *     tags: [Projects]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: integer
- *         required: true
- *         description: Уникальный ID проекта для обновления
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *                 description: Новое название проекта (макс. 100 символов).
- *                 example: "Updated Marketing Campaign"
- *               description:
- *                 type: string
- *                 description: Новое описание проекта (макс. 500 символов).
- *                 example: "Updated details about the Q3 campaign."
- *     responses:
- *       '200':
- *         description: Проект успешно обновлен. Возвращает обновленный объект проекта.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Project'
- *       '400':
- *         description: Ошибка валидации (например, пустое название или превышена длина).
- *       '403':
- *         description: Доступ запрещен (пользователь не является владельцем проекта).
- *       '404':
- *         description: Проект не найден.
- */
+        if (!project) {
+            return res.status(404).json({ error: "Project not found" });
+        }
+
+        res.json(project);
+    }),
+);
+
 // UPDATE
 router.put(
     "/:id",
@@ -276,27 +109,6 @@ router.put(
     },
 );
 
-/**
- * @swagger
- * /api/projects/{id}:
- *   delete:
- *     summary: Удаление проекта (доступно только владельцу)
- *     tags: [Projects]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: integer
- *         required: true
- *         description: ID проекта
- *     responses:
- *       200:
- *         description: Проект успешно удален.
- *       403:
- *         description: Доступ запрещен (не владелец).
- */
 // DELETE - Удаление проекта
 router.delete(
     "/:id",
@@ -312,30 +124,33 @@ router.delete(
     },
 );
 
-router.get("/:projectId/tabs", checkProjectAccess, async (req, res) => {
-    const tabs = await tabService.getTabsForProject(req.params.projectId);
-    res.json(tabs);
-});
+router.get(
+    "/:projectId/tabs",
+    checkProjectAccess,
+    asyncHandler(async (req, res) => {
+        const tabs = await tabService.getTabsForProject(req.params.projectId);
+        res.json(tabs);
+    }),
+);
 
 router.post(
     "/:projectId/tabs",
     [
+        validateProjectId,
         checkProjectAccess,
-        body("title").trim().notEmpty().withMessage("Title required"),
-        body("type").isIn(["text", "board", "code", "mindmap"]),
+        hasRole(["owner", "editor"]),
+        ...createTabValidator,
+        validate,
     ],
-    async (req, res) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty())
-            return res.status(400).json({ errors: errors.array() });
-
+    asyncHandler(async (req, res) => {
         const newTab = await tabService.createTab(
             req.user.id,
             req.params.projectId,
             req.body,
         );
+
         res.status(201).json(newTab);
-    },
+    }),
 );
 
 module.exports = router;

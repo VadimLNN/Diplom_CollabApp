@@ -1,19 +1,9 @@
-const { app, server } = require("./app");
-const PORT = process.env.PORT || 5000;
-const HOCO_PORT = process.env.HOCO_PORT;
-const hocuspocusServer = require("./realtime/hocuspocus_server");
+const { server } = require("./app");
+const env = require("./config/env");
 
-const fs = require("fs");
-const path = require("path");
-const pool = require("./db");
-
-initDb().then(() => {
-    server.listen(PORT, () => {
-        console.log(`🚀 Server: http://...:${PORT}`);
-        console.log(`📚 Swagger: http://...:${PORT}/api-docs`);
-    });
-});
-
-hocuspocusServer.listen(HOCO_PORT, () => {
-    console.log("🔌 Hocuspocus WS: ws:/.../api/collab");
+server.listen(env.port, () => {
+    console.log(`Server started on http://localhost:${env.port}`);
+    console.log(
+        `Swagger docs available at http://localhost:${env.port}/api-docs`,
+    );
 });

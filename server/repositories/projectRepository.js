@@ -32,12 +32,12 @@ class ProjectRepository {
     async update(projectId, { name, description }) {
         const { rows } = await pool.query(
             `UPDATE projects
-         SET
-            name = COALESCE($1, name),
-            description = COALESCE($2, description),
-            updated_at = CURRENT_TIMESTAMP
-         WHERE id = $3
-         RETURNING *`,
+            SET
+                name = COALESCE($1, name),
+                description = COALESCE($2, description),
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $3
+            RETURNING *`,
             [name ?? null, description ?? null, projectId],
         );
 

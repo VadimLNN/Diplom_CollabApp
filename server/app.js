@@ -6,15 +6,14 @@ const cors = require("cors");
 const swaggerJsdoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
 const { loginLimiter } = require("./middleware/rateLimiter");
-const { getUserRoleInProject } = require("./middleware/checkRole");
-const pool = require("./db");
-const jwt = require("jsonwebtoken");
 const tabsRoutes = require("./routes/tabs");
+
+const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
 const server = http.createServer(app);
 
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
 app.use(
     cors({
         origin: process.env.CLIENT_URL,
@@ -67,6 +66,7 @@ const swaggerOptions = {
 };
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 app.use(errorHandler);
 
 module.exports = { app, server };

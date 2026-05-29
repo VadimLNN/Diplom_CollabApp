@@ -1,26 +1,53 @@
-const permissionRepository = require("../repositories/permissionRepository");
 const projectRepository = require("../repositories/projectRepository");
+const permissionRepository = require("../repositories/permissionRepository");
 
 class AccessService {
     async getUserRoleInProject(userId, projectId) {
         const project = await projectRepository.findById(projectId);
 
-        if (!project) return null;
-        if (project.owner_id === userId) return "owner";
+        if (!project) {
+            return null;
+        }
+
+        if (String(project.owner_id) === String(userId)) {
+            return "owner";
+        }
 
         const permission = await permissionRepository.findByProjectAndUser(
             projectId,
             userId,
         );
-        return permission?.role || null;
+
+        return permission ? permission.role : null;
     }
 
-    assertRole(role, allowedRoles) {
-        if (!role || !allowedRoles.includes(role)) {
-            const error = new Error("Forbidden");
+    async canAccessProject(userId, projectId) {
+        const role = await this.getUserRoleInProject(userId, projectId);
+        return Boolean(role);
+    }
+
+    async assertProjectAccess(userId, projectId) {
+        const role = await this.getUserRoleInProject(userId, projectId);
+
+        if (!role) {
+            const error = new Error("Forbidden: No access to this project.");
             error.statusCode = 403;
             throw error;
         }
+
+        return role;
+    }
+
+    async assertProjectRole(userId, projectId, allowedRoles) {
+        const role = await this.getUserRoleInProject(userId, projectId);
+
+        if (!role || !allowedRoles.includes(role)) {
+            const error = new Error("Forbidden: Insufficient permissions.");
+            error.statusCode = 403;
+            throw error;
+        }
+
+        return role;
     }
 }
 
