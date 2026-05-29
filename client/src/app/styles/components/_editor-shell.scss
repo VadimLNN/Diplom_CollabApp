@@ -1,0 +1,81 @@
+@use "../tools/mixins" as *;
+
+.editor-shell {
+  @include surface-card;
+
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100svh - 220px);
+  overflow: hidden;
+  border-radius: var(--radius-3);
+  background: var(--color-surface-2);
+}
+
+.editor-shell__meta,
+.editor-shell__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-inline: var(--space-6);
+}
+
+.editor-shell__meta {
+  padding-top: var(--space-5);
+}
+
+.editor-shell__header {
+  align-items: flex-start;
+  padding-top: var(--space-5);
+  padding-bottom: var(--space-5);
+}
+
+.editor-shell__subtitle {
+  max-width: 68ch;
+}
+
+.editor-shell__toolbar {
+  padding-inline: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.editor-shell__body {
+  flex: 1;
+  min-height: 0;
+}
+
+.editor-shell--text .editor-shell__body {
+  padding: var(--space-4) var(--space-6) var(--space-6);
+}
+
+.editor-shell--board .editor-shell__body {
+  padding: 0;
+  background: #0b0d14;
+}
+
+.editor-shell--text .ProseMirror {
+  min-height: 60svh;
+  padding: var(--space-6);
+  border-radius: var(--radius-2);
+  background: rgba(7, 9, 15, 0.42);
+  color: var(--color-text-primary);
+  font-size: var(--text-md);
+  line-height: var(--lh-relaxed);
+}
+
+.editor-shell--text .ProseMirror:focus {
+  outline: none;
+}
+
+@media (max-width: 767px) {
+  .editor-shell__meta,
+  .editor-shell__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .editor-shell--text .editor-shell__body {
+    padding-inline: var(--space-4);
+  }
+}

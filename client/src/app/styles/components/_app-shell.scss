@@ -1,0 +1,91 @@
+/* src/app/styles/components/_app-shell.scss */
+@use "../tools/mixins" as *;
+
+.app-shell {
+  min-height: 100svh;
+}
+
+.app-shell__header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  padding-top: var(--space-4);
+}
+
+.app-shell__main {
+  padding-top: var(--space-7);
+  padding-bottom: var(--space-9);
+}
+
+.page {
+  width: 100%;
+}
+
+.page--centered {
+  min-height: calc(100svh - var(--header-height) - var(--space-7));
+  display: grid;
+  place-items: center;
+}
+
+.page--narrow {
+  max-width: 680px;
+}
+
+.page--editor {
+  max-width: 1320px;
+}
+
+.app-header {
+  @include surface-card;
+  border-radius: var(--radius-pill);
+}
+
+.app-header__inner {
+  min-height: var(--header-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.app-header__brand {
+  font-size: clamp(1.25rem, 1vw + 1rem, 1.75rem);
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.app-header__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+.app-header__link,
+.app-header__user {
+  color: var(--color-text-secondary);
+}
+
+.app-header__link {
+  position: relative;
+  @include interactive-lift;
+}
+
+.app-header__link:hover,
+.app-header__link:focus-visible {
+  color: var(--color-text-primary);
+}
+
+@media (max-width: 767px) {
+  .app-header__inner {
+    min-height: auto;
+    padding-block: var(--space-4);
+    flex-wrap: wrap;
+  }
+
+  .app-header__nav {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+}
