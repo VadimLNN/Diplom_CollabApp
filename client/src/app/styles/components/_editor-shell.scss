@@ -213,3 +213,10 @@
         padding-inline: var(--space-4);
     }
 }
+
+.editor-readonly-banner {
+    margin-bottom: var(--space-5);
+    padding: var(--space-4) var(--space-6);
+    border-radius: var(--radius-3);
+    color: var(--color-text-secondary);
+}
