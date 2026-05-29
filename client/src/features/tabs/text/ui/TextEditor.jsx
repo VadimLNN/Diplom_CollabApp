@@ -5,8 +5,8 @@ import TextAlign from "@tiptap/extension-text-align";
 import Underline from "@tiptap/extension-underline";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useEffect, useMemo, useState } from "react";
-import { getHocusProvider } from "../../../../shared/realtime/getHocusProvider";
+
+import { useHocusProvider } from "../../../../shared/realtime/getHocusProvider";
 import EditorToolbar from "./EditorToolbar";
 
 const TextEditorReady = ({ provider, connected }) => {
@@ -79,62 +79,10 @@ const TextEditorReady = ({ provider, connected }) => {
 };
 
 const TextEditor = ({ tab }) => {
-    const [connected, setConnected] = useState(false);
-    const [synced, setSynced] = useState(false);
-    const [syncError, setSyncError] = useState(null);
+    const { provider, connected, synced, error } = useHocusProvider(tab);
 
-    const provider = useMemo(() => {
-        if (!tab?.id || !tab?.ydoc_document_name) {
-            return null;
-        }
-
-        return getHocusProvider(tab.id, tab.ydoc_document_name);
-    }, [tab?.id, tab?.ydoc_document_name]);
-
-    useEffect(() => {
-        if (!provider) {
-            return;
-        }
-
-        setConnected(false);
-        setSynced(false);
-        setSyncError(null);
-
-        const handleStatus = ({ status }) => {
-            setConnected(status === "connected");
-            console.log("[TextEditor] Hocuspocus status:", status);
-        };
-
-        const handleSynced = () => {
-            console.log("[TextEditor] Hocuspocus synced");
-            setSynced(true);
-        };
-
-        const handleConnectionClose = (event) => {
-            console.warn("[TextEditor] Hocuspocus connection closed", event);
-            setConnected(false);
-        };
-
-        const handleConnectionError = (event) => {
-            console.error("[TextEditor] Hocuspocus connection error", event);
-            setSyncError("Realtime connection error");
-        };
-
-        provider.on("status", handleStatus);
-        provider.on("synced", handleSynced);
-        provider.on("close", handleConnectionClose);
-        provider.on("connection-error", handleConnectionError);
-
-        return () => {
-            provider.off("status", handleStatus);
-            provider.off("synced", handleSynced);
-            provider.off("close", handleConnectionClose);
-            provider.off("connection-error", handleConnectionError);
-        };
-    }, [provider]);
-
-    if (syncError) {
-        return <div className="card">⚠️ {syncError}. Try reconnecting.</div>;
+    if (error) {
+        return <div className="card">⚠️ {error}. Try reconnecting.</div>;
     }
 
     if (!provider || !synced) {
