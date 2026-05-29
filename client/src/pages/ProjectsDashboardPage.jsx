@@ -1,11 +1,10 @@
 // src/pages/ProjectsDashboardPage.jsx
-import React, { useState, useEffect, useCallback } from "react";
-import api from "../shared/api/axios";
-import ProjectGrid from "../widgets/ProjectGrid/ui/ProjectGrid";
-import styles from "./PageStyles.module.css";
-import CreateProjectForm from "../features/projects/create/ui/CreateProjectForm";
-import Modal from "../shared/ui/Modal/Modal";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import CreateProjectForm from "../features/projects/create/CreateProjectForm";
+import api from "../shared/api/axios";
+import Modal from "../shared/ui/Modal/Modal";
+import ProjectGrid from "../widgets/ProjectGrid/ProjectGrid";
 
 const ProjectsDashboardPage = () => {
     const [projects, setProjects] = useState([]);
@@ -19,8 +18,9 @@ const ProjectsDashboardPage = () => {
             setError("");
             const response = await api.get("/projects");
 
-            // ✅ ФИЛЬТРУЕМ удалённые/битые проекты
-            const validProjects = response.data.filter((project) => project.id && project.name && !project.deleted_at);
+            const validProjects = response.data.filter(
+                (project) => project.id && project.name && !project.deleted_at,
+            );
 
             setProjects(validProjects);
         } catch (err) {
@@ -48,27 +48,31 @@ const ProjectsDashboardPage = () => {
 
     if (isLoading) {
         return (
-            <div className={styles.pageContainer}>
+            <div className="page u-content-width">
                 <p>Loading projects...</p>
             </div>
         );
     }
 
     return (
-        <div className={styles.pageContainer}>
-            <div className={styles.pageHeader}>
+        <div className="page u-content-width">
+            <header className="page-header">
                 <h1>My Projects</h1>
-            </div>
+            </header>
 
             {error && <p style={{ color: "red" }}>{error}</p>}
 
             <ProjectGrid
                 projects={projects}
                 onCreateClick={handleOpenCreateModal}
-                onRefresh={fetchProjects} // ✅ Для очистки состояния
+                onRefresh={fetchProjects}
             />
 
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Create New Project">
+            <Modal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title="Create New Project"
+            >
                 <CreateProjectForm onSuccess={handleProjectCreated} />
             </Modal>
         </div>

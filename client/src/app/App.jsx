@@ -2,7 +2,7 @@ import React from "react";
 import { Toaster } from "react-hot-toast";
 import { BrowserRouter as Router } from "react-router-dom";
 import AuroraBG from "../shared/ui/AuroraBG/AuroraBG";
-import Header from "../widgets/Header/ui/Header";
+import Header from "../widgets/Header/Header";
 import { AuthProvider } from "./providers/AuthProvider";
 import Routes from "./routes/index";
 import "./styles/index.scss";

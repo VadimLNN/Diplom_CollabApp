@@ -1,8 +1,5 @@
-// src/entities/project/ui/ProjectCard.jsx
-import React from "react";
 import { useNavigate } from "react-router-dom";
-import Card from "../../../shared/ui/Card/Card"; // Наша стеклянная карточка
-import styles from "./ProjectCard.module.css";
+import Card from "../../../shared/ui/Card/Card";
 
 const ProjectCard = ({ project }) => {
     const navigate = useNavigate();
@@ -12,12 +9,25 @@ const ProjectCard = ({ project }) => {
     };
 
     return (
-        <Card className={styles.projectCard}>
-            <h3 className={styles.title}>{project.name}</h3>
-            <p className={styles.description}>{project.description || "No description provided."}</p>
-            <div className={styles.footer}>
-                <span className={styles.date}>Created: {new Date(project.created_at).toLocaleDateString()}</span>
-                <button onClick={handleOpenProject} className={styles.openButton}>
+        <Card className="project-card card--interactive">
+            <div className="project-card__head">
+                <h3 className="project-card__title">{project.name}</h3>
+            </div>
+
+            <p className="project-card__text">
+                {project.description || "No description provided."}
+            </p>
+
+            <div className="card__footer">
+                <span className="project-card__meta">
+                    Created: {new Date(project.created_at).toLocaleDateString()}
+                </span>
+
+                <button
+                    type="button"
+                    onClick={handleOpenProject}
+                    className="button button--secondary"
+                >
                     Open
                 </button>
             </div>

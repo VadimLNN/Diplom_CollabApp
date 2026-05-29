@@ -2,12 +2,13 @@ import * as React from "react";
 import * as Toolbar from "@radix-ui/react-toolbar";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import styles from "./EditorToolbar.module.css";
 
-const Separator = () => <Toolbar.Separator className={styles.separator} />;
+const Separator = () => (
+    <Toolbar.Separator className="editor-toolbar__separator" />
+);
 
 const Icon = ({ children }) => (
-    <span className={styles.icon} aria-hidden="true">
+    <span className="editor-toolbar__icon" aria-hidden="true">
         {children}
     </span>
 );
@@ -28,7 +29,11 @@ function TButton({ label, disabled, pressed, onClick, children }) {
                 </Toolbar.Button>
             </Tooltip.Trigger>
             <Tooltip.Portal>
-                <Tooltip.Content className={styles.tooltip} side="bottom" sideOffset={6}>
+                <Tooltip.Content
+                    className={styles.tooltip}
+                    side="bottom"
+                    sideOffset={6}
+                >
                     {label}
                 </Tooltip.Content>
             </Tooltip.Portal>
@@ -40,13 +45,22 @@ function Dropdown({ label, disabled, trigger, children }) {
     return (
         <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
-                <Toolbar.Button className={styles.button} aria-label={label} disabled={disabled} type="button">
+                <Toolbar.Button
+                    className={styles.button}
+                    aria-label={label}
+                    disabled={disabled}
+                    type="button"
+                >
                     {trigger}
                 </Toolbar.Button>
             </DropdownMenu.Trigger>
 
             <DropdownMenu.Portal>
-                <DropdownMenu.Content className={styles.dropdown} side="bottom" sideOffset={6}>
+                <DropdownMenu.Content
+                    className={styles.dropdown}
+                    side="bottom"
+                    sideOffset={6}
+                >
                     {children}
                 </DropdownMenu.Content>
             </DropdownMenu.Portal>
@@ -77,13 +91,24 @@ const EditorToolbar = ({ editor }) => {
 
     return (
         <Tooltip.Provider>
-            <Toolbar.Root className={styles.toolbar} aria-label="Editor toolbar">
+            <Toolbar.Root
+                className={styles.toolbar}
+                aria-label="Editor toolbar"
+            >
                 {/* Undo / Redo */}
-                <TButton label="Undo" disabled={!editor.can().undo()} onClick={() => run((c) => c.undo())}>
+                <TButton
+                    label="Undo"
+                    disabled={!editor.can().undo()}
+                    onClick={() => run((c) => c.undo())}
+                >
                     <Icon>↶</Icon>
                 </TButton>
 
-                <TButton label="Redo" disabled={!editor.can().redo()} onClick={() => run((c) => c.redo())}>
+                <TButton
+                    label="Redo"
+                    disabled={!editor.can().redo()}
+                    onClick={() => run((c) => c.redo())}
+                >
                     <Icon>↷</Icon>
                 </TButton>
 
@@ -100,16 +125,28 @@ const EditorToolbar = ({ editor }) => {
                         </>
                     }
                 >
-                    <DItem active={editor.isActive("heading", { level: 1 })} onSelect={() => run((c) => c.setHeading({ level: 1 }))}>
+                    <DItem
+                        active={editor.isActive("heading", { level: 1 })}
+                        onSelect={() => run((c) => c.setHeading({ level: 1 }))}
+                    >
                         Heading 1
                     </DItem>
-                    <DItem active={editor.isActive("heading", { level: 2 })} onSelect={() => run((c) => c.setHeading({ level: 2 }))}>
+                    <DItem
+                        active={editor.isActive("heading", { level: 2 })}
+                        onSelect={() => run((c) => c.setHeading({ level: 2 }))}
+                    >
                         Heading 2
                     </DItem>
-                    <DItem active={editor.isActive("heading", { level: 3 })} onSelect={() => run((c) => c.setHeading({ level: 3 }))}>
+                    <DItem
+                        active={editor.isActive("heading", { level: 3 })}
+                        onSelect={() => run((c) => c.setHeading({ level: 3 }))}
+                    >
                         Heading 3
                     </DItem>
-                    <DItem active={editor.isActive("paragraph")} onSelect={() => run((c) => c.setParagraph())}>
+                    <DItem
+                        active={editor.isActive("paragraph")}
+                        onSelect={() => run((c) => c.setParagraph())}
+                    >
                         Paragraph
                     </DItem>
                 </Dropdown>
@@ -124,10 +161,16 @@ const EditorToolbar = ({ editor }) => {
                         </>
                     }
                 >
-                    <DItem active={editor.isActive("bulletList")} onSelect={() => run((c) => c.toggleBulletList())}>
+                    <DItem
+                        active={editor.isActive("bulletList")}
+                        onSelect={() => run((c) => c.toggleBulletList())}
+                    >
                         Bullet list
                     </DItem>
-                    <DItem active={editor.isActive("orderedList")} onSelect={() => run((c) => c.toggleOrderedList())}>
+                    <DItem
+                        active={editor.isActive("orderedList")}
+                        onSelect={() => run((c) => c.toggleOrderedList())}
+                    >
                         Ordered list
                     </DItem>
                 </Dropdown>
@@ -156,7 +199,11 @@ const EditorToolbar = ({ editor }) => {
                 <Separator />
 
                 {/* Marks: bold/italic/strike/code/underline */}
-                <Toolbar.ToggleGroup className="tiptap-toolbar-toggle-group" type="multiple" aria-label="Text formatting">
+                <Toolbar.ToggleGroup
+                    className="tiptap-toolbar-toggle-group"
+                    type="multiple"
+                    aria-label="Text formatting"
+                >
                     <Toolbar.ToggleItem
                         className={`${styles.button} ${editor.isActive("bold") ? styles.buttonActive : ""}`}
                         value="bold"
@@ -203,7 +250,9 @@ const EditorToolbar = ({ editor }) => {
                         value="underline"
                         aria-label="Underline"
                         disabled={!editor.can().toggleUnderline?.() ?? false}
-                        onClick={() => editor.chain().focus().toggleUnderline?.().run()}
+                        onClick={() =>
+                            editor.chain().focus().toggleUnderline?.().run()
+                        }
                     >
                         <Icon>U</Icon>
                     </Toolbar.ToggleItem>
@@ -212,12 +261,18 @@ const EditorToolbar = ({ editor }) => {
                 <Separator />
 
                 {/* Align left/center/right/justify (будет работать, если подключён TextAlign) */}
-                <Toolbar.ToggleGroup className="tiptap-toolbar-toggle-group" type="single" aria-label="Text alignment">
+                <Toolbar.ToggleGroup
+                    className="tiptap-toolbar-toggle-group"
+                    type="single"
+                    aria-label="Text alignment"
+                >
                     <Toolbar.ToggleItem
                         className={`${styles.button} ${editor.isActive({ textAlign: "left" }) ? styles.buttonActive : ""}`}
                         value="left"
                         aria-label="Align left"
-                        onClick={() => editor.chain().focus().setTextAlign("left").run()}
+                        onClick={() =>
+                            editor.chain().focus().setTextAlign("left").run()
+                        }
                     >
                         <Icon>L</Icon>
                     </Toolbar.ToggleItem>
@@ -226,7 +281,9 @@ const EditorToolbar = ({ editor }) => {
                         className={`${styles.button} ${editor.isActive({ textAlign: "center" }) ? styles.buttonActive : ""}`}
                         value="center"
                         aria-label="Align center"
-                        onClick={() => editor.chain().focus().setTextAlign("center").run()}
+                        onClick={() =>
+                            editor.chain().focus().setTextAlign("center").run()
+                        }
                     >
                         <Icon>C</Icon>
                     </Toolbar.ToggleItem>
@@ -235,7 +292,9 @@ const EditorToolbar = ({ editor }) => {
                         className={`${styles.button} ${editor.isActive({ textAlign: "right" }) ? styles.buttonActive : ""}`}
                         value="right"
                         aria-label="Align right"
-                        onClick={() => editor.chain().focus().setTextAlign("right").run()}
+                        onClick={() =>
+                            editor.chain().focus().setTextAlign("right").run()
+                        }
                     >
                         <Icon>R</Icon>
                     </Toolbar.ToggleItem>
@@ -244,7 +303,9 @@ const EditorToolbar = ({ editor }) => {
                         className={`${styles.button} ${editor.isActive({ textAlign: "justify" }) ? styles.buttonActive : ""}`}
                         value="justify"
                         aria-label="Align justify"
-                        onClick={() => editor.chain().focus().setTextAlign("justify").run()}
+                        onClick={() =>
+                            editor.chain().focus().setTextAlign("justify").run()
+                        }
                     >
                         <Icon>J</Icon>
                     </Toolbar.ToggleItem>
