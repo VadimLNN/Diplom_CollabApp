@@ -1,11 +1,14 @@
 // src/features/tabs/editor/ui/TabEditor.jsx
-import React, { useMemo, useEffect, useState } from "react";
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Collaboration from "@tiptap/extension-collaboration";
 import { HocuspocusProvider } from "@hocuspocus/provider";
-import styles from "./TextEditor.module.css";
+import Collaboration from "@tiptap/extension-collaboration";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { useEffect, useMemo, useState } from "react";
 import EditorToolbar from "./EditorToolbar";
+import Underline from "@tiptap/extension-underline";
+import TextAlign from "@tiptap/extension-text-align";
+import Image from "@tiptap/extension-image";
+import Placeholder from "@tiptap/extension-placeholder";
 
 const providerCache = new Map();
 
@@ -52,13 +55,29 @@ const TextEditor = ({ tab }) => {
                       StarterKit.configure({
                           history: false,
                       }),
+
+                      Underline,
+
+                      TextAlign.configure({
+                          types: ["heading", "paragraph"],
+                      }),
+
+                      Image.configure({
+                          inline: false,
+                          allowBase64: true,
+                      }),
+
+                      Placeholder.configure({
+                          placeholder: "Start writing together...",
+                      }),
+
                       Collaboration.configure({
                           document: provider.document,
                       }),
                   ],
                   editorProps: {
                       attributes: {
-                          class: styles.editorContent,
+                          class: "editor-shell__content",
                       },
                   },
               }
@@ -66,17 +85,28 @@ const TextEditor = ({ tab }) => {
     );
 
     if (!editor) {
-        return <div className={styles.loading}>🔄 Initializing editor...</div>;
+        return <div className="card">🔄 Initializing editor...</div>;
     }
 
     return (
-        <div className={styles.container}>
-            <span className={connected ? styles.connected : styles.disconnected}>{connected ? "🟢 Connected" : "🔴 Disconnected"}</span>
-            <EditorToolbar editor={editor} />
-            <div className={styles.editor}>
+        <section className="editor-shell editor-shell--text">
+            <div className="editor-shell__meta">
+                <span
+                    className={`status-chip ${connected ? "status-chip--success" : "status-chip--danger"}`}
+                >
+                    <span className="status-chip__dot" aria-hidden="true" />
+                    {connected ? "Connected" : "Disconnected"}
+                </span>
+            </div>
+
+            <div className="editor-shell__toolbar">
+                <EditorToolbar editor={editor} />
+            </div>
+
+            <div className="editor-shell__body">
                 <EditorContent editor={editor} />
             </div>
-        </div>
+        </section>
     );
 };
 

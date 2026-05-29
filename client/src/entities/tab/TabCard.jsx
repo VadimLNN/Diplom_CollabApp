@@ -1,59 +1,65 @@
-// src/entities/tab/ui/TabCard.jsx
-import React from "react";
-import Card from "../../shared/ui/Card/Card";
 import { Link } from "react-router-dom";
-import cardStyles from "../../entities/project/ui/ProjectCard"; // ✅ Тот же стиль!
+import Card from "../../shared/ui/Card/Card";
 
 const TabCard = ({ tab, isActive, onDelete, projectId }) => {
     const getIcon = (type) => {
         const icons = {
             text: "📄",
             board: "🎨",
-            code: "💻",
-            mindmap: "🧠",
         };
         return icons[type] || "📋";
     };
 
-    const handleDeleteTab = (e) => {
-        e.preventDefault(); // ✅ Не открываем при клике на delete
-        onDelete(tab.id);
+    const handleDeleteTab = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onDelete?.(tab.id);
     };
 
     return (
-        <Card className={`${cardStyles.projectCard} ${isActive ? cardStyles.active : ""}`}>
-            <div className={cardStyles.header}>
-                <span className={cardStyles.icon}>{getIcon(tab.type)}</span>
+        <Card
+            className={`tab-card card--interactive ${isActive ? "is-active" : ""}`}
+        >
+            <div className="tab-card__head">
+                <span className="tab-card__icon" aria-hidden="true">
+                    {getIcon(tab.type)}
+                </span>
+
                 <div>
-                    <h3 className={cardStyles.title}>{tab.title}</h3>
-                    <span className={cardStyles.type}>{tab.type}</span>
+                    <h3 className="tab-card__title">{tab.title}</h3>
+                    <span className="badge badge--neutral">{tab.type}</span>
                 </div>
             </div>
 
-            <p className={cardStyles.description}>
+            <p className="tab-card__description">
                 {tab.type === "text"
                     ? "Collaborative text editor"
                     : tab.type === "board"
-                    ? "Drawing canvas"
-                    : tab.type === "code"
-                    ? "Live code editor"
-                    : "Mind mapping"}
+                      ? "Drawing canvas"
+                      : tab.type === "code"}
             </p>
 
-            <div className={cardStyles.footer}>
-                <span className={cardStyles.date}>Updated: {new Date(tab.created_at).toLocaleDateString()}</span>
-                <div className={cardStyles.actions}>
+            <div className="card__footer">
+                <span className="tab-card__meta">
+                    Updated: {new Date(tab.created_at).toLocaleDateString()}
+                </span>
+
+                <div className="tab-card__actions">
                     {onDelete && (
-                        <button onClick={handleDeleteTab} className={cardStyles.deleteButton}>
+                        <button
+                            type="button"
+                            onClick={handleDeleteTab}
+                            className="button button--ghost"
+                        >
                             Delete
                         </button>
                     )}
-                    {/* ✅ Link на отдельную страницу редактора */}
+
                     <Link
                         to={`/projects/${tab.project_id}/tabs/${tab.id}`}
-                        className={`${cardStyles.openButton} ${isActive ? cardStyles.active : ""}`}
+                        className="button button--secondary"
                     >
-                        {isActive ? "Editing..." : "✏️ Open"}
+                        {isActive ? "Editing..." : "Open"}
                     </Link>
                 </div>
             </div>

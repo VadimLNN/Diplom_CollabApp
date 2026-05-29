@@ -1,9 +1,8 @@
 // src/features/tabs/board/BoardEditor.jsx
-import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Excalidraw } from "@excalidraw/excalidraw";
-import { HocuspocusProvider } from "@hocuspocus/provider";
-import styles from "./BoardEditor.module.css";
 import "@excalidraw/excalidraw/index.css";
+import { HocuspocusProvider } from "@hocuspocus/provider";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const providerCache = new Map();
 
@@ -73,9 +72,6 @@ export default function BoardEditor({ tab }) {
 
         if (!excalidrawAPI || !sceneMap) return;
 
-        // ВАЖНО:
-        // если сцены ещё нет, ничего не применяем.
-        // Иначе мы сами стираем свежесозданную фигуру пустым массивом.
         if (!sceneMap.has("elements")) return;
 
         const elements = sceneMap.get("elements") || [];
@@ -91,8 +87,6 @@ export default function BoardEditor({ tab }) {
             },
         });
 
-        // Excalidraw может вызвать onChange после updateScene.
-        // Поэтому флаг снимаем не сразу, а на следующем тике.
         setTimeout(() => {
             applyingRemoteRef.current = false;
         }, 0);
@@ -121,25 +115,19 @@ export default function BoardEditor({ tab }) {
         };
     }, [provider]);
 
-    // Первичная загрузка сохранённой сцены.
     useEffect(() => {
         if (!apiReady || !sceneMap || initialSceneAppliedRef.current) return;
 
-        // Если provider уже успел синхронизироваться — применяем.
-        // Если synced event не пришёл, connected тоже подходит как fallback.
         if (!synced && !connected) return;
 
         applySceneFromYjs();
         initialSceneAppliedRef.current = true;
     }, [apiReady, synced, connected, sceneMap, applySceneFromYjs]);
 
-    // REMOTE → LOCAL
     useEffect(() => {
         if (!apiReady || !sceneMap) return;
 
         const onRemoteChange = (event, transaction) => {
-            // Ключевой фикс:
-            // не применяем изменения, которые сами же только что записали.
             if (transaction.origin === LOCAL_ORIGIN) return;
 
             if (applyingRemoteRef.current) return;
@@ -154,7 +142,6 @@ export default function BoardEditor({ tab }) {
         };
     }, [apiReady, sceneMap, applySceneFromYjs]);
 
-    // LOCAL → REMOTE
     const handleChange = useCallback(
         (elements, appState) => {
             if (!ydoc || !sceneMap) return;
@@ -169,20 +156,25 @@ export default function BoardEditor({ tab }) {
                 sceneMap.set("updatedAt", Date.now());
             }, LOCAL_ORIGIN);
         },
-        [ydoc, sceneMap]
+        [ydoc, sceneMap],
     );
 
     if (!provider) {
-        return <div className={styles.loading}>🔄 Initializing board…</div>;
+        return <div className="card">🔄 Initializing board…</div>;
     }
 
     return (
-        <div className={styles.container}>
-            <span className={connected ? styles.connected : styles.disconnected}>
-                {connected ? "🟢 Connected" : "🔴 Disconnected"}
-            </span>
+        <section className="editor-shell editor-shell--board">
+            <div className="editor-shell__meta">
+                <span
+                    className={`status-chip ${connected ? "status-chip--success" : "status-chip--danger"}`}
+                >
+                    <span className="status-chip__dot" aria-hidden="true" />
+                    {connected ? "Connected" : "Disconnected"}
+                </span>
+            </div>
 
-            <div className={styles.board}>
+            <div className="editor-shell__body">
                 <Excalidraw
                     excalidrawAPI={(api) => {
                         if (!excalidrawAPIRef.current) {
@@ -194,6 +186,6 @@ export default function BoardEditor({ tab }) {
                     theme="dark"
                 />
             </div>
-        </div>
+        </section>
     );
 }

@@ -1,0 +1,94 @@
+/* src/app/styles/components/_form.scss */
+@use "../tokens/mixins" as *;
+
+.form {
+    display: grid;
+    gap: var(--space-5);
+}
+
+.form__group {
+    min-width: 0;
+}
+
+.form__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+}
+
+.form--auth {
+    width: min(100%, 420px);
+}
+
+.field {
+    display: grid;
+    gap: var(--space-2);
+}
+
+.field__label {
+    color: var(--color-text-primary);
+    font-size: var(--text-xs);
+    font-weight: 600;
+}
+
+.field__hint,
+.field__error {
+    font-size: var(--text-2xs);
+    line-height: var(--lh-base);
+}
+
+.field__hint {
+    color: var(--color-text-muted);
+}
+
+.field__error {
+    color: #ffb3be;
+}
+
+.field__control {
+    @include interactive-lift;
+
+    width: 100%;
+    min-height: 48px;
+    padding-inline: var(--space-4);
+
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-border);
+
+    background: rgba(6, 8, 14, 0.44);
+    color: var(--color-text-primary);
+}
+
+.field__control::placeholder {
+    color: var(--color-text-muted);
+}
+
+.field__control:hover {
+    border-color: var(--color-border-strong);
+}
+
+.field__control:focus-visible {
+    border-color: var(--color-accent);
+}
+
+.field__control:disabled {
+    opacity: 0.56;
+    cursor: not-allowed;
+}
+
+.field--invalid .field__control,
+.field__control[aria-invalid="true"] {
+    border-color: rgba(255, 125, 144, 0.9);
+}
+
+.field--textarea .field__control {
+    min-height: 132px;
+    padding-block: 14px;
+    resize: vertical;
+    border-radius: var(--radius-2);
+}
+
+.form__actions--end {
+    justify-content: flex-end;
+}

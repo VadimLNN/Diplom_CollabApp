@@ -1,15 +1,13 @@
-// src/pages/ProjectDetailPage.jsx
-import React, { useState, useEffect, useCallback } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import ProjectMembers from "../features/projects/manage-members/ProjectMembers";
+import ProjectSettings from "../features/projects/settings/ProjectSettings";
+import CreateTabForm from "../features/tabs/create_tab/CreateTabForm";
 import api from "../shared/api/axios";
-import ProjectMembers from "../features/projects/manage-members/ui/ProjectMembers";
-import ProjectSettings from "../features/projects/settings/ui/ProjectSettings";
 import Modal from "../shared/ui/Modal/Modal";
-import CreateTabForm from "../features/tabs/create_tab/ui/CreateTabForm";
-import TabGrid from "../widgets/TabGrid/ui/TabGrid";
+import TabGrid from "../widgets/TabGrid/TabGrid";
 
 import pageStyles from "./PageStyles.module.css";
-import styles from "./ProjectDetailPage.module.css";
 
 const ProjectDetailPage = () => {
     const { projectId } = useParams();
@@ -17,7 +15,6 @@ const ProjectDetailPage = () => {
 
     const navigate = useNavigate();
 
-    // Состояния
     const [project, setProject] = useState(null);
     const [tabs, setTabs] = useState([]);
     const [userRole, setUserRole] = useState(null);
@@ -34,11 +31,9 @@ const ProjectDetailPage = () => {
             setIsLoading(true);
             setError("");
 
-            // ✅ 1. Проект
             const projectRes = await api.get(`/projects/${projectId}`);
             setProject(projectRes.data);
 
-            // ✅ 2. TABS вместо documents!
             const tabsRes = await api.get(`/projects/${projectId}/tabs`);
             setTabs(
                 tabsRes.data.map((tab) => ({
@@ -47,9 +42,10 @@ const ProjectDetailPage = () => {
                 })),
             );
 
-            // ✅ 3. Роль
             try {
-                const roleRes = await api.get(`/projects/${projectId}/permissions/my-role`);
+                const roleRes = await api.get(
+                    `/projects/${projectId}/permissions/my-role`,
+                );
                 setUserRole(roleRes.data.role);
             } catch {
                 setUserRole("viewer");
@@ -82,7 +78,8 @@ const ProjectDetailPage = () => {
         }
     };
 
-    if (isLoading) return <div className={pageStyles.pageContainer}>Loading...</div>;
+    if (isLoading)
+        return <div className={pageStyles.pageContainer}>Loading...</div>;
     if (error)
         return (
             <div className={pageStyles.pageContainer}>
@@ -91,42 +88,85 @@ const ProjectDetailPage = () => {
         );
 
     return (
-        <div className={`${pageStyles.pageContainer} ${styles.editorLayout}`}>
-            <div className={styles.breadcrumbs}>
-                <Link to="/projects">My Projects</Link> / {project.name}
-            </div>
+        <div className="page u-content-width">
+            <nav className="breadcrumbs" aria-label="Breadcrumbs">
+                <Link to="/projects">My Projects</Link>
+                <span>/</span>
+                <span>{project.name}</span>
+            </nav>
 
-            <header className={styles.projectHeader}>
-                <h1>{project.name}</h1>
-                <p>{project.description}</p>
+            <header className="page-header">
+                <div className="page-header__content">
+                    <h1>{project.name}</h1>
+                    {project.description && (
+                        <p className="page-header__description">
+                            {project.description}
+                        </p>
+                    )}
+                </div>
             </header>
 
-            {/* ✅ Tabs навигация */}
-            <div className={styles.tabs}>
-                <button className={`${styles.tabButton} ${activeTab === "tabs" ? styles.active : ""}`} onClick={() => setActiveTab("tabs")}>
-                    🖥️ Tabs ({tabs.length})
+            <div
+                className="tabs-nav"
+                role="tablist"
+                aria-label="Project sections"
+            >
+                <button
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === "tabs"}
+                    className={`tabs-nav__tab ${activeTab === "tabs" ? "tabs-nav__tab--active" : ""}`}
+                    onClick={() => setActiveTab("tabs")}
+                >
+                    <span aria-hidden="true">🖥️</span>
+                    Tabs
+                    <span className="tabs-nav__count">({tabs.length})</span>
                 </button>
-                <button className={`${styles.tabButton} ${activeTab === "members" ? styles.active : ""}`} onClick={() => setActiveTab("members")}>
-                    👥 Members
+
+                <button
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === "members"}
+                    className={`tabs-nav__tab ${activeTab === "members" ? "tabs-nav__tab--active" : ""}`}
+                    onClick={() => setActiveTab("members")}
+                >
+                    <span aria-hidden="true">👥</span>
+                    Members
                 </button>
+
                 {userRole === "owner" && (
                     <button
-                        className={`${styles.tabButton} ${activeTab === "settings" ? styles.active : ""}`}
+                        type="button"
+                        role="tab"
+                        aria-selected={activeTab === "settings"}
+                        className={`tabs-nav__tab ${activeTab === "settings" ? "tabs-nav__tab--active" : ""}`}
                         onClick={() => setActiveTab("settings")}
                     >
-                        ⚙️ Settings
+                        <span aria-hidden="true">⚙️</span>
+                        Settings
                     </button>
                 )}
             </div>
 
-            <div className={styles.tabContent}>
+            <div className="tabs-nav__panel">
                 {activeTab === "tabs" && (
                     <>
-                        <div className={styles.tabsHeader}>
-                            <h3>Collaborative Workspace</h3>
-                            <button onClick={() => setIsCreateTabModalOpen(true)} className={styles.createTabButton}>
-                                + New Tab
-                            </button>
+                        <div className="page-header">
+                            <div className="page-header__content">
+                                <h3>Collaborative Workspace</h3>
+                            </div>
+
+                            <div className="page-header__actions">
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setIsCreateTabModalOpen(true)
+                                    }
+                                    className="button button--primary"
+                                >
+                                    + New Tab
+                                </button>
+                            </div>
                         </div>
 
                         <TabGrid
@@ -139,12 +179,23 @@ const ProjectDetailPage = () => {
                     </>
                 )}
 
-                {activeTab === "members" && <ProjectMembers projectId={projectId} userRole={userRole} />}
-                {activeTab === "settings" && userRole === "owner" && <ProjectSettings project={project} />}
+                {activeTab === "members" && (
+                    <ProjectMembers projectId={projectId} userRole={userRole} />
+                )}
+                {activeTab === "settings" && userRole === "owner" && (
+                    <ProjectSettings project={project} />
+                )}
             </div>
 
-            <Modal isOpen={isCreateTabModalOpen} onClose={() => setIsCreateTabModalOpen(false)} title="Create New Tab">
-                <CreateTabForm projectId={projectId} onSuccess={handleTabCreated} />
+            <Modal
+                isOpen={isCreateTabModalOpen}
+                onClose={() => setIsCreateTabModalOpen(false)}
+                title="Create New Tab"
+            >
+                <CreateTabForm
+                    projectId={projectId}
+                    onSuccess={handleTabCreated}
+                />
             </Modal>
         </div>
     );

@@ -1,0 +1,182 @@
+@use "../tokens/mixins" as *;
+
+.app-shell {
+    min-height: 100svh;
+}
+
+.app-shell__header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    padding: var(--space-3) var(--page-gutter) 0;
+}
+
+.app-shell__main {
+    padding-top: var(--space-6);
+    padding-bottom: var(--space-9);
+}
+
+/* Header */
+
+.app-header {
+    @include surface-card;
+
+    width: min(100%, var(--container-max));
+    margin-inline: auto;
+    border-radius: var(--radius-2);
+}
+
+.app-header__inner {
+    min-height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: 0 var(--space-5);
+}
+
+.app-header__brand {
+    flex-shrink: 0;
+    color: var(--color-text-primary);
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.app-header__nav {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-4);
+    min-width: 0;
+}
+
+.app-header__link,
+.app-header__user {
+    color: var(--color-text-secondary);
+    font-size: var(--text-xs);
+    white-space: nowrap;
+}
+
+.app-header__link {
+    @include interactive-lift;
+}
+
+.app-header__link:hover,
+.app-header__link:focus-visible {
+    color: var(--color-text-primary);
+}
+
+.app-header .button {
+    min-height: 38px;
+    padding-inline: 14px;
+    font-size: var(--text-xs);
+}
+
+/* Pages */
+
+.page {
+    width: 100%;
+}
+
+.page--centered {
+    min-height: calc(100svh - var(--header-height) - var(--space-7));
+    display: grid;
+    place-items: center;
+}
+
+.page--narrow {
+    max-width: 680px;
+}
+
+.page--editor {
+    max-width: 1320px;
+}
+
+.page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-7);
+}
+
+.page-header__content {
+    display: grid;
+    gap: var(--space-2);
+}
+
+.page-header__description {
+    max-width: 68ch;
+    color: var(--color-text-secondary);
+}
+
+.page-header__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+/* Breadcrumbs */
+
+.breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-5);
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+}
+
+.breadcrumbs a {
+    color: var(--color-text-secondary);
+}
+
+.breadcrumbs a:hover {
+    color: var(--color-text-primary);
+}
+
+/* Layout utilities */
+
+.stack {
+    display: grid;
+    gap: var(--space-6);
+}
+
+/* Toast confirm */
+
+.toast-confirm {
+    display: grid;
+    gap: var(--space-3);
+}
+
+.toast-confirm__text {
+    color: var(--color-text-primary);
+}
+
+.toast-confirm__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+}
+
+/* Responsive */
+
+@media (max-width: 640px) {
+    .app-shell__header {
+        padding-inline: var(--space-3);
+    }
+
+    .app-header__inner {
+        min-height: auto;
+        align-items: stretch;
+        flex-direction: column;
+        gap: var(--space-3);
+        padding: var(--space-4);
+    }
+
+    .app-header__nav {
+        justify-content: space-between;
+        width: 100%;
+    }
+}

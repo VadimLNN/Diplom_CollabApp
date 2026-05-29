@@ -1,14 +1,11 @@
-// src/pages/DocumentEditorPage.jsx
-import React, { useState, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import api from "../shared/api/axios";
-import pageStyles from "./PageStyles.module.css";
-import styles from "./DocumentEditorPage.module.css";
 
 import EditorRenderer from "../features/tabs/EditorRenderer";
 
 const DocumentEditorPage = () => {
-    const { projectId, tabId } = useParams(); // ✅ tabId!
+    const { projectId, tabId } = useParams();
     const navigate = useNavigate();
 
     const [tab, setTab] = useState(null);
@@ -19,8 +16,9 @@ const DocumentEditorPage = () => {
         const fetchTab = async () => {
             try {
                 setIsLoading(true);
-                // ✅ Загружаем конкретный tab
-                const response = await api.get(`/projects/${projectId}/tabs/${tabId}`);
+                const response = await api.get(
+                    `/projects/${projectId}/tabs/${tabId}`,
+                );
                 setTab(response.data);
             } catch (err) {
                 setError("Failed to load tab");
@@ -34,14 +32,21 @@ const DocumentEditorPage = () => {
     }, [tabId, projectId]);
 
     if (isLoading) {
-        return <div className={pageStyles.pageContainer}>🔄 Loading editor...</div>;
+        return (
+            <div className="page page--editor u-content-width">
+                🔄 Loading editor...
+            </div>
+        );
     }
 
     if (error || !tab) {
         return (
-            <div className={pageStyles.pageContainer}>
-                <p style={{ color: "red" }}>{error || "Tab not found"}</p>
-                <Link to={`/projects/${projectId}`} className={styles.backButton}>
+            <div className="page page--editor u-content-width">
+                <p className="field__error">{error || "Tab not found"}</p>
+                <Link
+                    to={`/projects/${projectId}`}
+                    className="button button--secondary"
+                >
                     ← Back to Project
                 </Link>
             </div>
@@ -49,21 +54,20 @@ const DocumentEditorPage = () => {
     }
 
     return (
-        <div className={`${pageStyles.pageContainer} ${styles.fullEditor}`}>
-            {/* Header */}
-            <div className={styles.header}>
-                <Link to={`/projects/${projectId}`} className={styles.backLink}>
+        <div className="page page--editor u-content-width">
+            <nav className="breadcrumbs" aria-label="Breadcrumbs">
+                <Link to={`/projects/${projectId}`}>
                     ← {tab.project_name || "Project"}
                 </Link>
-                <div>
+            </nav>
+
+            <header className="page-header">
+                <div className="page-header__content">
                     <h1>{tab.title}</h1>
                 </div>
-            </div>
+            </header>
 
-            {/* ✅ TabEditor — 100% рабочий! */}
-            <div className={styles.editorContainer}>
-                <EditorRenderer tab={tab} />
-            </div>
+            <EditorRenderer tab={tab} />
         </div>
     );
 };

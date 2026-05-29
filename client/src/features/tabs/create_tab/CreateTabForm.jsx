@@ -1,0 +1,83 @@
+import { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import api from "../../../shared/api/axios";
+
+const CreateTabForm = ({ projectId, onSuccess, isOpen }) => {
+    const [title, setTitle] = useState("");
+    const [tabType, setTabType] = useState("text");
+    const titleInputRef = useRef(null);
+
+    useEffect(() => {
+        if (isOpen && titleInputRef.current) {
+            setTimeout(() => {
+                titleInputRef.current.focus();
+            }, 100);
+        }
+        if (!isOpen) {
+            setTitle("");
+            setTabType("text");
+        }
+    }, [isOpen]);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const response = await api.post(`/projects/${projectId}/tabs`, {
+                title,
+                type: tabType,
+            });
+            toast.success(`Tab "${title}" created!`);
+            onSuccess(response.data);
+        } catch (err) {
+            const errorMessage =
+                err.response?.data?.errors?.[0]?.msg ||
+                err.response?.data?.error ||
+                "Failed to create tab";
+            toast.error(errorMessage);
+        }
+    };
+
+    return (
+        <form onSubmit={handleSubmit} className="form">
+            <div className="field">
+                <label className="field__label" htmlFor="tab-title">
+                    Tab title
+                </label>
+                <input
+                    id="tab-title"
+                    ref={titleInputRef}
+                    className="field__control"
+                    type="text"
+                    placeholder="Enter tab title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    required
+                />
+            </div>
+
+            <div className="field">
+                <label className="field__label" htmlFor="tab-type">
+                    Tab type
+                </label>
+                <select
+                    id="tab-type"
+                    value={tabType}
+                    onChange={(e) => setTabType(e.target.value)}
+                    className="field__control"
+                    required
+                >
+                    <option value="text">Text Document</option>
+                    <option value="board">Drawing Board</option>
+                </select>
+            </div>
+
+            <div className="form__actions">
+                <button type="submit" className="button button--primary">
+                    Create Tab
+                </button>
+            </div>
+        </form>
+    );
+};
+
+export default CreateTabForm;

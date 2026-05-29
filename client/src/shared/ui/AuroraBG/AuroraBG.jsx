@@ -1,7 +1,5 @@
-import { Renderer, Program, Mesh, Color, Triangle } from "ogl";
+import { Color, Mesh, Program, Renderer, Triangle } from "ogl";
 import { useEffect, useRef } from "react";
-
-import "./AuroraBG.css";
 
 const VERT = `#version 300 es
 in vec2 position;
@@ -110,7 +108,11 @@ void main() {
 `;
 
 export default function AuroraBG(props) {
-    const { colorStops = ["#5227FF", "#7cff67", "#5227FF"], amplitude = 1.0, blend = 0.5 } = props;
+    const {
+        colorStops = ["#5227FF", "#7cff67", "#5227FF"],
+        amplitude = 1.0,
+        blend = 0.5,
+    } = props;
     const propsRef = useRef(props);
     propsRef.current = props;
 
@@ -174,7 +176,8 @@ export default function AuroraBG(props) {
             animateId = requestAnimationFrame(update);
             const { time = t * 0.01, speed = 1.0 } = propsRef.current;
             program.uniforms.uTime.value = time * speed * 0.1;
-            program.uniforms.uAmplitude.value = propsRef.current.amplitude ?? 1.0;
+            program.uniforms.uAmplitude.value =
+                propsRef.current.amplitude ?? 1.0;
             program.uniforms.uBlend.value = propsRef.current.blend ?? blend;
             const stops = propsRef.current.colorStops ?? colorStops;
             program.uniforms.uColorStops.value = stops.map((hex) => {

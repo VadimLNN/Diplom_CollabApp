@@ -1,0 +1,59 @@
+/* src/app/styles/components/_tabs-nav.scss */
+@use "../tokens/mixins" as *;
+
+.tabs-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding-bottom: var(--space-1);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tabs-nav__tab {
+  @include interactive-lift;
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+
+  min-height: 44px;
+  padding-inline: 14px;
+
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.tabs-nav__tab:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-text-primary);
+}
+
+.tabs-nav__tab--active {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text-primary);
+}
+
+.tabs-nav__tab--active::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: -7px;
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+}
+
+.tabs-nav__count {
+  color: var(--color-text-muted);
+  font-size: var(--text-2xs);
+}
+
+.tabs-nav__panel {
+  padding-top: var(--space-6);
+}
