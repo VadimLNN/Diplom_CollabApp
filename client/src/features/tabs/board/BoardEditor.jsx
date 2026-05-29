@@ -1,25 +1,9 @@
-// src/features/tabs/board/BoardEditor.jsx
 import { Excalidraw } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
-import { HocuspocusProvider } from "@hocuspocus/provider";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-
-const providerCache = new Map();
+import { getHocusProvider } from "../../../shared/realtime/getHocusProvider";
 
 const LOCAL_ORIGIN = "local-excalidraw-change";
-
-function getProvider(tabId, docName) {
-    if (!providerCache.has(tabId)) {
-        const provider = new HocuspocusProvider({
-            url: import.meta.env.VITE_WS_URL,
-            name: docName,
-        });
-
-        providerCache.set(tabId, provider);
-    }
-
-    return providerCache.get(tabId);
-}
 
 function cloneJson(value) {
     return JSON.parse(JSON.stringify(value));
@@ -54,10 +38,11 @@ export default function BoardEditor({ tab }) {
     const excalidrawAPIRef = useRef(null);
     const applyingRemoteRef = useRef(false);
     const initialSceneAppliedRef = useRef(false);
+    const localChangeTimerRef = useRef(null);
 
     const provider = useMemo(() => {
         if (!tab?.ydoc_document_name) return null;
-        return getProvider(tab.id, tab.ydoc_document_name);
+        return getHocusProvider(tab.id, tab.ydoc_document_name);
     }, [tab?.id, tab?.ydoc_document_name]);
 
     const ydoc = provider?.document ?? null;
@@ -118,11 +103,11 @@ export default function BoardEditor({ tab }) {
     useEffect(() => {
         if (!apiReady || !sceneMap || initialSceneAppliedRef.current) return;
 
-        if (!synced && !connected) return;
+        if (!synced) return;
 
         applySceneFromYjs();
         initialSceneAppliedRef.current = true;
-    }, [apiReady, synced, connected, sceneMap, applySceneFromYjs]);
+    }, [apiReady, synced, sceneMap, applySceneFromYjs]);
 
     useEffect(() => {
         if (!apiReady || !sceneMap) return;
@@ -142,25 +127,39 @@ export default function BoardEditor({ tab }) {
         };
     }, [apiReady, sceneMap, applySceneFromYjs]);
 
-    const handleChange = useCallback(
-        (elements, appState) => {
-            if (!ydoc || !sceneMap) return;
-            if (applyingRemoteRef.current) return;
+    const handleChange = (elements, appState) => {
+        if (!ydoc || !sceneMap) {
+            return;
+        }
 
-            const cleanElements = cloneJson(elements);
-            const cleanAppState = getCleanAppState(appState);
+        if (!initialSceneAppliedRef.current) {
+            return;
+        }
 
-            ydoc.transact(() => {
-                sceneMap.set("elements", cleanElements);
-                sceneMap.set("appState", cleanAppState);
-                sceneMap.set("updatedAt", Date.now());
-            }, LOCAL_ORIGIN);
-        },
-        [ydoc, sceneMap],
-    );
+        if (applyingRemoteRef.current) {
+            return;
+        }
 
-    if (!provider) {
-        return <div className="card">🔄 Initializing board…</div>;
+        const cleanElements = elements.map((element) => ({ ...element }));
+        const cleanAppState = getCleanAppState(appState);
+
+        ydoc.transact(() => {
+            sceneMap.set("elements", cleanElements);
+            sceneMap.set("appState", cleanAppState);
+            sceneMap.set("updatedAt", Date.now());
+        }, LOCAL_ORIGIN);
+    };
+
+    useEffect(() => {
+        return () => {
+            if (localChangeTimerRef.current) {
+                clearTimeout(localChangeTimerRef.current);
+            }
+        };
+    }, []);
+
+    if (!provider || !synced) {
+        return <div className="card">🔄 Loading board state…</div>;
     }
 
     return (
