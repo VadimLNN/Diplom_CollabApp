@@ -9,10 +9,11 @@ import StarterKit from "@tiptap/starter-kit";
 import { useHocusProvider } from "../../../../shared/realtime/getHocusProvider";
 import EditorToolbar from "./EditorToolbar";
 
-const TextEditorReady = ({ provider, connected }) => {
+const TextEditorReady = ({ provider, connected, canEdit }) => {
     const editor = useEditor(
         {
             immediatelyRender: false,
+            editable: canEdit,
 
             extensions: [
                 StarterKit.configure({
@@ -67,9 +68,11 @@ const TextEditorReady = ({ provider, connected }) => {
                 </span>
             </div>
 
-            <div className="editor-shell__toolbar">
-                <EditorToolbar editor={editor} />
-            </div>
+            {canEdit && (
+                <div className="editor-shell__toolbar">
+                    <EditorToolbar editor={editor} />
+                </div>
+            )}
 
             <div className="editor-shell__body">
                 <EditorContent editor={editor} />
@@ -78,7 +81,7 @@ const TextEditorReady = ({ provider, connected }) => {
     );
 };
 
-const TextEditor = ({ tab }) => {
+const TextEditor = ({ tab, canEdit }) => {
     const { provider, connected, synced, error } = useHocusProvider(tab);
 
     if (error) {
@@ -89,7 +92,13 @@ const TextEditor = ({ tab }) => {
         return <div className="card">🔄 Loading document state...</div>;
     }
 
-    return <TextEditorReady provider={provider} connected={connected} />;
+    return (
+        <TextEditorReady
+            provider={provider}
+            connected={connected}
+            canEdit={canEdit}
+        />
+    );
 };
 
 export default TextEditor;

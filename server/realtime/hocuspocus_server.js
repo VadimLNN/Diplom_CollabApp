@@ -1,7 +1,9 @@
 const { Server } = require("@hocuspocus/server");
 const { Database } = require("@hocuspocus/extension-database");
 const Y = require("yjs");
+
 const pool = require("../db");
+const { getCollabAccess } = require("../services/collabAccessService");
 
 function isValidYjsState(state) {
     if (!state) {
@@ -10,7 +12,6 @@ function isValidYjsState(state) {
 
     const buffer = Buffer.from(state);
 
-    // 1 байт — точно битое состояние, Yjs его не прочитает.
     if (buffer.length < 2) {
         return false;
     }
@@ -123,12 +124,30 @@ const hocuspocusServer = new Server({
         }),
     ],
 
-    onConnect({ documentName }) {
-        console.log("🟢 CONNECT", documentName);
-    },
+    async onAuthenticate(data) {
+        const access = await getCollabAccess({
+            token: data.token,
+            documentName: data.documentName,
+        });
 
-    onDisconnect({ documentName }) {
-        console.log("🔴 DISCONNECT", documentName);
+        console.log(
+            "🔐 REALTIME AUTH",
+            data.documentName,
+            "user:",
+            access.user.id,
+            "role:",
+            access.role,
+            "canWrite:",
+            access.canWrite,
+        );
+
+        return {
+            user: access.user,
+            role: access.role,
+            projectId: access.projectId,
+            tabId: access.tabId,
+            canWrite: access.canWrite,
+        };
     },
 });
 

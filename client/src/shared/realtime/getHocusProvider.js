@@ -15,6 +15,8 @@ export function useHocusProvider(tab) {
             return;
         }
 
+        const token = localStorage.getItem("token");
+
         setProvider(null);
         setConnected(false);
         setSynced(false);
@@ -23,6 +25,7 @@ export function useHocusProvider(tab) {
         const nextProvider = new HocuspocusProvider({
             url: import.meta.env.VITE_WS_URL,
             name: tab.ydoc_document_name,
+            token,
         });
 
         const handleStatus = ({ status }) => {

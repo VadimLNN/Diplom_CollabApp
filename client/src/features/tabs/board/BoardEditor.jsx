@@ -8,7 +8,7 @@ const LOCAL_ORIGIN = "local-excalidraw-change";
 
 const SYNC_INTERVAL_MS = 33;
 
-const BoardEditor = ({ tab }) => {
+const BoardEditor = ({ tab, canEdit }) => {
     const {
         provider,
         connected,
@@ -126,6 +126,10 @@ const BoardEditor = ({ tab }) => {
 
     const handleChange = useCallback(
         (elements) => {
+            if (!canEdit) {
+                return;
+            }
+
             if (!ydoc || !sceneMap) {
                 return;
             }
@@ -219,6 +223,7 @@ const BoardEditor = ({ tab }) => {
             <div className="editor-shell__body editor-shell__body--board">
                 <Excalidraw
                     theme="dark"
+                    viewModeEnabled={!canEdit}
                     excalidrawAPI={(api) => {
                         excalidrawAPIRef.current = api;
                         setApiReady(Boolean(api));
