@@ -1,191 +1,233 @@
-// src/features/tabs/board/BoardEditor.jsx
 import { Excalidraw } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
-import { HocuspocusProvider } from "@hocuspocus/provider";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-const providerCache = new Map();
+import { useHocusProvider } from "../../../shared/realtime/getHocusProvider";
 
 const LOCAL_ORIGIN = "local-excalidraw-change";
 
-function getProvider(tabId, docName) {
-    if (!providerCache.has(tabId)) {
-        const provider = new HocuspocusProvider({
-            url: import.meta.env.VITE_WS_URL,
-            name: docName,
-        });
+const SYNC_INTERVAL_MS = 33;
 
-        providerCache.set(tabId, provider);
-    }
+const BoardEditor = ({ tab }) => {
+    const {
+        provider,
+        connected,
+        synced,
+        error: syncError,
+    } = useHocusProvider(tab);
 
-    return providerCache.get(tabId);
-}
-
-function cloneJson(value) {
-    return JSON.parse(JSON.stringify(value));
-}
-
-function getCleanAppState(appState) {
-    return {
-        viewBackgroundColor: appState.viewBackgroundColor,
-
-        currentItemStrokeColor: appState.currentItemStrokeColor,
-        currentItemBackgroundColor: appState.currentItemBackgroundColor,
-        currentItemFillStyle: appState.currentItemFillStyle,
-        currentItemStrokeWidth: appState.currentItemStrokeWidth,
-        currentItemStrokeStyle: appState.currentItemStrokeStyle,
-        currentItemRoughness: appState.currentItemRoughness,
-        currentItemOpacity: appState.currentItemOpacity,
-
-        currentItemFontFamily: appState.currentItemFontFamily,
-        currentItemFontSize: appState.currentItemFontSize,
-        currentItemTextAlign: appState.currentItemTextAlign,
-
-        currentItemStartArrowhead: appState.currentItemStartArrowhead,
-        currentItemEndArrowhead: appState.currentItemEndArrowhead,
-    };
-}
-
-export default function BoardEditor({ tab }) {
-    const [connected, setConnected] = useState(false);
     const [apiReady, setApiReady] = useState(false);
-    const [synced, setSynced] = useState(false);
 
     const excalidrawAPIRef = useRef(null);
+
     const applyingRemoteRef = useRef(false);
     const initialSceneAppliedRef = useRef(false);
 
-    const provider = useMemo(() => {
-        if (!tab?.ydoc_document_name) return null;
-        return getProvider(tab.id, tab.ydoc_document_name);
-    }, [tab?.id, tab?.ydoc_document_name]);
+    const latestElementsRef = useRef(null);
+    const pendingSyncTimerRef = useRef(null);
+    const lastSyncAtRef = useRef(0);
+    const remoteApplyTimerRef = useRef(null);
 
-    const ydoc = provider?.document ?? null;
+    const ydoc = provider?.document;
 
     const sceneMap = useMemo(() => {
-        if (!ydoc) return null;
+        if (!ydoc) {
+            return null;
+        }
+
         return ydoc.getMap("excalidraw_scene");
     }, [ydoc]);
 
     const applySceneFromYjs = useCallback(() => {
         const excalidrawAPI = excalidrawAPIRef.current;
 
-        if (!excalidrawAPI || !sceneMap) return;
+        if (!excalidrawAPI || !sceneMap) {
+            return false;
+        }
 
-        if (!sceneMap.has("elements")) return;
+        const elements = sceneMap.get("elements");
 
-        const elements = sceneMap.get("elements") || [];
-        const appState = sceneMap.get("appState") || {};
+        if (!Array.isArray(elements)) {
+            return false;
+        }
 
         applyingRemoteRef.current = true;
 
         excalidrawAPI.updateScene({
             elements,
-            appState: {
-                ...appState,
-                collaborators: new Map(),
-            },
         });
 
-        setTimeout(() => {
+        if (remoteApplyTimerRef.current) {
+            clearTimeout(remoteApplyTimerRef.current);
+        }
+
+        remoteApplyTimerRef.current = setTimeout(() => {
             applyingRemoteRef.current = false;
-        }, 0);
+        }, 80);
+
+        return true;
     }, [sceneMap]);
 
     useEffect(() => {
-        if (!provider) return;
-
-        const onStatus = ({ status }) => {
-            const isConnected = status === "connected";
-            setConnected(isConnected);
-            console.log("[Board] Hocuspocus:", status);
-        };
-
-        const onSynced = () => {
-            console.log("[Board] Hocuspocus synced");
-            setSynced(true);
-        };
-
-        provider.on("status", onStatus);
-        provider.on("synced", onSynced);
-
-        return () => {
-            provider.off("status", onStatus);
-            provider.off("synced", onSynced);
-        };
-    }, [provider]);
-
-    useEffect(() => {
-        if (!apiReady || !sceneMap || initialSceneAppliedRef.current) return;
-
-        if (!synced && !connected) return;
+        if (
+            !synced ||
+            !apiReady ||
+            !sceneMap ||
+            initialSceneAppliedRef.current
+        ) {
+            return;
+        }
 
         applySceneFromYjs();
+
         initialSceneAppliedRef.current = true;
-    }, [apiReady, synced, connected, sceneMap, applySceneFromYjs]);
+    }, [synced, apiReady, sceneMap, applySceneFromYjs]);
 
     useEffect(() => {
-        if (!apiReady || !sceneMap) return;
+        if (!sceneMap) {
+            return;
+        }
 
-        const onRemoteChange = (event, transaction) => {
-            if (transaction.origin === LOCAL_ORIGIN) return;
+        const handleRemoteSceneChange = (event, transaction) => {
+            if (transaction.origin === LOCAL_ORIGIN) {
+                return;
+            }
 
-            if (applyingRemoteRef.current) return;
+            if (applyingRemoteRef.current) {
+                return;
+            }
 
             applySceneFromYjs();
         };
 
-        sceneMap.observe(onRemoteChange);
+        sceneMap.observe(handleRemoteSceneChange);
 
         return () => {
-            sceneMap.unobserve(onRemoteChange);
+            sceneMap.unobserve(handleRemoteSceneChange);
         };
-    }, [apiReady, sceneMap, applySceneFromYjs]);
+    }, [sceneMap, applySceneFromYjs]);
+
+    const flushLatestElements = useCallback(() => {
+        if (!ydoc || !sceneMap || !latestElementsRef.current) {
+            pendingSyncTimerRef.current = null;
+            return;
+        }
+
+        const latestElements = latestElementsRef.current;
+
+        ydoc.transact(() => {
+            sceneMap.set("elements", latestElements);
+            sceneMap.set("updatedAt", Date.now());
+        }, LOCAL_ORIGIN);
+
+        lastSyncAtRef.current = Date.now();
+        pendingSyncTimerRef.current = null;
+    }, [ydoc, sceneMap]);
 
     const handleChange = useCallback(
-        (elements, appState) => {
-            if (!ydoc || !sceneMap) return;
-            if (applyingRemoteRef.current) return;
+        (elements) => {
+            if (!ydoc || !sceneMap) {
+                return;
+            }
 
-            const cleanElements = cloneJson(elements);
-            const cleanAppState = getCleanAppState(appState);
+            if (!synced || !apiReady) {
+                return;
+            }
 
-            ydoc.transact(() => {
-                sceneMap.set("elements", cleanElements);
-                sceneMap.set("appState", cleanAppState);
-                sceneMap.set("updatedAt", Date.now());
-            }, LOCAL_ORIGIN);
+            if (!initialSceneAppliedRef.current) {
+                return;
+            }
+
+            if (applyingRemoteRef.current) {
+                return;
+            }
+
+            latestElementsRef.current = elements.map((element) => ({
+                ...element,
+            }));
+
+            const now = Date.now();
+            const elapsed = now - lastSyncAtRef.current;
+
+            if (elapsed >= SYNC_INTERVAL_MS) {
+                flushLatestElements();
+                return;
+            }
+
+            if (!pendingSyncTimerRef.current) {
+                pendingSyncTimerRef.current = setTimeout(() => {
+                    flushLatestElements();
+                }, SYNC_INTERVAL_MS - elapsed);
+            }
         },
-        [ydoc, sceneMap],
+        [ydoc, sceneMap, synced, apiReady, flushLatestElements],
     );
 
-    if (!provider) {
-        return <div className="card">🔄 Initializing board…</div>;
+    useEffect(() => {
+        initialSceneAppliedRef.current = false;
+        latestElementsRef.current = null;
+        lastSyncAtRef.current = 0;
+        applyingRemoteRef.current = false;
+        setApiReady(false);
+
+        if (pendingSyncTimerRef.current) {
+            clearTimeout(pendingSyncTimerRef.current);
+            pendingSyncTimerRef.current = null;
+        }
+
+        if (remoteApplyTimerRef.current) {
+            clearTimeout(remoteApplyTimerRef.current);
+            remoteApplyTimerRef.current = null;
+        }
+    }, [tab?.id, tab?.ydoc_document_name]);
+
+    useEffect(() => {
+        return () => {
+            if (pendingSyncTimerRef.current) {
+                clearTimeout(pendingSyncTimerRef.current);
+            }
+
+            if (remoteApplyTimerRef.current) {
+                clearTimeout(remoteApplyTimerRef.current);
+            }
+        };
+    }, []);
+
+    if (syncError) {
+        return <div className="card">⚠️ {syncError}. Try reconnecting.</div>;
+    }
+
+    if (!provider || !synced) {
+        return <div className="card">🔄 Loading board state...</div>;
     }
 
     return (
         <section className="editor-shell editor-shell--board">
             <div className="editor-shell__meta">
                 <span
-                    className={`status-chip ${connected ? "status-chip--success" : "status-chip--danger"}`}
+                    className={`status-chip ${
+                        connected
+                            ? "status-chip--success"
+                            : "status-chip--danger"
+                    }`}
                 >
                     <span className="status-chip__dot" aria-hidden="true" />
                     {connected ? "Connected" : "Disconnected"}
                 </span>
             </div>
 
-            <div className="editor-shell__body">
+            <div className="editor-shell__body editor-shell__body--board">
                 <Excalidraw
+                    theme="dark"
                     excalidrawAPI={(api) => {
-                        if (!excalidrawAPIRef.current) {
-                            excalidrawAPIRef.current = api;
-                            setApiReady(true);
-                        }
+                        excalidrawAPIRef.current = api;
+                        setApiReady(Boolean(api));
                     }}
                     onChange={handleChange}
-                    theme="dark"
                 />
             </div>
         </section>
     );
-}
+};
+
+export default BoardEditor;

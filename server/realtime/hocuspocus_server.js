@@ -1,7 +1,30 @@
-// /realtime/hocuspocus_server.js
 const { Server } = require("@hocuspocus/server");
 const { Database } = require("@hocuspocus/extension-database");
+const Y = require("yjs");
 const pool = require("../db");
+
+function isValidYjsState(state) {
+    if (!state) {
+        return false;
+    }
+
+    const buffer = Buffer.from(state);
+
+    // 1 байт — точно битое состояние, Yjs его не прочитает.
+    if (buffer.length < 2) {
+        return false;
+    }
+
+    try {
+        const doc = new Y.Doc();
+        Y.applyUpdate(doc, buffer);
+        doc.destroy();
+        return true;
+    } catch (error) {
+        console.warn("[Yjs] Invalid document state:", error.message);
+        return false;
+    }
+}
 
 const hocuspocusServer = new Server({
     port: null,
@@ -10,37 +33,92 @@ const hocuspocusServer = new Server({
     extensions: [
         new Database({
             fetch: async ({ documentName }) => {
-                const result = await pool.query("SELECT ydoc_data FROM yjs_documents WHERE ydoc_document_name = $1", [documentName]);
+                const result = await pool.query(
+                    `
+                    SELECT ydoc_data
+                    FROM yjs_documents
+                    WHERE ydoc_document_name = $1
+                    `,
+                    [documentName],
+                );
 
                 const row = result.rows[0];
 
-                // ⬅️ КРИТИЧНО: если данных нет или они подозрительные
-                if (!row || !row.ydoc_data || row.ydoc_data.length < 20) {
+                if (!row || !row.ydoc_data) {
                     console.log("📄 Creating new Yjs doc:", documentName);
                     return null;
                 }
 
-                return row.ydoc_data;
+                const buffer = Buffer.from(row.ydoc_data);
+
+                if (!isValidYjsState(buffer)) {
+                    console.warn(
+                        "⚠️ Found corrupted Yjs doc, deleting and creating new:",
+                        documentName,
+                        buffer.length,
+                    );
+
+                    await pool.query(
+                        `
+                        DELETE FROM yjs_documents
+                        WHERE ydoc_document_name = $1
+                        `,
+                        [documentName],
+                    );
+
+                    return null;
+                }
+
+                console.log("📄 Loaded Yjs doc:", documentName, buffer.length);
+                return buffer;
             },
 
             store: async ({ documentName, state }) => {
-                // ⬅️ КРИТИЧНО: НЕ сохраняем мусор
-                if (!state || state.length < 20) {
-                    console.warn("⚠️ Skip storing invalid Yjs state:", documentName, state?.length);
+                const buffer = Buffer.from(state || []);
+
+                if (!isValidYjsState(buffer)) {
+                    console.warn(
+                        "⚠️ Skip storing invalid Yjs state:",
+                        documentName,
+                        buffer.length,
+                    );
                     return;
                 }
 
-                await pool.query(
+                const result = await pool.query(
                     `
-                    INSERT INTO yjs_documents (ydoc_document_name, ydoc_data, created_at, updated_at)
-                    VALUES ($1, $2, NOW(), NOW())
+                    INSERT INTO yjs_documents (
+                        ydoc_document_name,
+                        ydoc_data,
+                        version,
+                        byte_length,
+                        last_persisted_at,
+                        created_at,
+                        updated_at
+                    )
+                    VALUES ($1, $2, 1, $3, NOW(), NOW(), NOW())
                     ON CONFLICT (ydoc_document_name)
-                    DO UPDATE SET ydoc_data = $2, updated_at = NOW()
+                    DO UPDATE SET
+                        ydoc_data = EXCLUDED.ydoc_data,
+                        version = yjs_documents.version + 1,
+                        byte_length = EXCLUDED.byte_length,
+                        last_persisted_at = NOW(),
+                        updated_at = NOW()
+                    RETURNING version, byte_length
                     `,
-                    [documentName, Buffer.from(state)],
+                    [documentName, buffer, buffer.length],
                 );
 
-                console.log("💾 Stored Yjs doc:", documentName, state.length);
+                const saved = result.rows[0];
+
+                console.log(
+                    "💾 Stored Yjs doc:",
+                    documentName,
+                    "version:",
+                    saved.version,
+                    "bytes:",
+                    saved.byte_length,
+                );
             },
         }),
     ],
@@ -51,10 +129,6 @@ const hocuspocusServer = new Server({
 
     onDisconnect({ documentName }) {
         console.log("🔴 DISCONNECT", documentName);
-    },
-
-    onChange({ documentName }) {
-        //console.log("✏️ UPDATE in document:", documentName);
     },
 });
 
