@@ -2,16 +2,18 @@ const pool = require("../db");
 
 class ProjectRepository {
     async create({ name, description, ownerId }) {
-        const { rows } = await pool.query("INSERT INTO projects (name, description, owner_id) VALUES ($1, $2, $3) RETURNING *", [
-            name,
-            description,
-            ownerId,
-        ]);
+        const { rows } = await pool.query(
+            "INSERT INTO projects (name, description, owner_id) VALUES ($1, $2, $3) RETURNING *",
+            [name, description, ownerId],
+        );
         return rows[0];
     }
 
     async findById(projectId) {
-        const { rows } = await pool.query("SELECT * FROM projects WHERE id = $1", [projectId]);
+        const { rows } = await pool.query(
+            "SELECT * FROM projects WHERE id = $1",
+            [projectId],
+        );
         return rows[0];
     }
 
@@ -28,11 +30,17 @@ class ProjectRepository {
     }
 
     async update(projectId, { name, description }) {
-        const { rows } = await pool.query("UPDATE projects SET name = $1, description = $2 WHERE id = $3 RETURNING *", [
-            name,
-            description,
-            projectId,
-        ]);
+        const { rows } = await pool.query(
+            `UPDATE projects
+            SET
+                name = COALESCE($1, name),
+                description = COALESCE($2, description),
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $3
+            RETURNING *`,
+            [name ?? null, description ?? null, projectId],
+        );
+
         return rows[0];
     }
 

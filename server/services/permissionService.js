@@ -1,20 +1,17 @@
-// services/permissionService.js
 const permissionRepository = require("../repositories/permissionRepository");
-const userRepository = require("../repositories/userRepository"); // Нам понадобится для поиска по email
-const projectRepository = require("../repositories/projectRepository"); // Для проверки владельца
+const userRepository = require("../repositories/userRepository");
+const projectRepository = require("../repositories/projectRepository");
 
-const { getUserRoleInProject } = require("../middleware/checkRole");
+const accessService = require("./accessService");
 
 class PermissionService {
     async getProjectMembers(projectId) {
         const members = await permissionRepository.findMembers(projectId);
         const owner = await projectRepository.findById(projectId);
 
-        // Получаем полные данные о владельце и добавляем ему роль 'owner'
         const ownerInfo = await userRepository.findById(owner.owner_id);
         const ownerAsMember = { ...ownerInfo, role: "owner" };
 
-        // Объединяем и убираем дубликаты
         const membersMap = new Map();
         [ownerAsMember, ...members].forEach((member) => {
             membersMap.set(member.id, member);
@@ -24,19 +21,19 @@ class PermissionService {
     }
 
     async getUserRole(userId, projectId) {
-        // Сервисный метод просто вызывает и возвращает результат
-        // нашей основной функции. Это сохраняет правильную архитектуру.
-        return getUserRoleInProject(userId, projectId);
+        return accessService.getUserRoleInProject(userId, projectId);
     }
 
     async inviteUser(projectId, inviterId, { email, role }) {
         if (!email || !role || !["editor", "viewer"].includes(role)) {
-            const error = new Error("User email and a valid role ('editor' or 'viewer') are required");
+            const error = new Error(
+                "User email and a valid role ('editor' or 'viewer') are required",
+            );
             error.statusCode = 400;
             throw error;
         }
 
-        const userToInvite = await userRepository.findByEmail(email); // Предполагаем, что этот метод будет в userRepository
+        const userToInvite = await userRepository.findByEmail(email);
         if (!userToInvite) {
             const error = new Error("User with this email not found");
             error.statusCode = 404;
@@ -51,15 +48,20 @@ class PermissionService {
         }
 
         try {
-            return await permissionRepository.add(projectId, userToInvite.id, role);
+            return await permissionRepository.add(
+                projectId,
+                userToInvite.id,
+                role,
+            );
         } catch (error) {
             if (error.code === "23505") {
-                // unique_violation
-                const customError = new Error("This user already has access to the project.");
+                const customError = new Error(
+                    "This user already has access to the project.",
+                );
                 customError.statusCode = 409;
                 throw customError;
             }
-            throw error; // Перебрасываем другие ошибки
+            throw error;
         }
     }
 
