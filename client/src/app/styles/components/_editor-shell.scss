@@ -22,6 +22,13 @@
 
 .editor-shell__meta {
     padding-top: var(--space-5);
+    padding-bottom: var(--space-3);
+}
+
+.editor-shell__toolbar {
+    padding-inline: var(--space-6);
+    padding-bottom: var(--space-5);
+    border-bottom: 1px solid var(--color-border);
 }
 
 .editor-shell__header {
@@ -32,12 +39,6 @@
 
 .editor-shell__subtitle {
     max-width: 68ch;
-}
-
-.editor-shell__toolbar {
-    padding-inline: var(--space-4);
-    padding-bottom: var(--space-4);
-    border-bottom: 1px solid var(--color-border);
 }
 
 .editor-shell__content {
@@ -83,9 +84,29 @@
     padding: var(--space-4) var(--space-6) var(--space-6);
 }
 
+.editor-shell--board {
+    height: calc(100svh - 170px);
+    min-height: 620px;
+}
+
+.editor-shell--board .editor-shell__meta {
+    flex-shrink: 0;
+    padding-top: var(--space-4);
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+}
+
 .editor-shell--board .editor-shell__body {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
     padding: 0;
     background: #0b0d14;
+}
+
+.editor-shell--board .excalidraw {
+    height: 100%;
 }
 
 .editor-shell--text .ProseMirror {
@@ -102,6 +123,12 @@
     outline: none;
 }
 
+.editor-toolbar__group {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
 @media (max-width: 767px) {
     .editor-shell__meta,
     .editor-shell__header {
@@ -110,6 +137,79 @@
     }
 
     .editor-shell--text .editor-shell__body {
+        padding-inline: var(--space-4);
+    }
+}
+
+.editor-shell--text .ProseMirror p {
+    margin-block: 0 1em;
+}
+
+.editor-shell--text .ProseMirror h1,
+.editor-shell--text .ProseMirror h2,
+.editor-shell__meta,
+.editor-shell__heade .editor-shell--text .ProseMirror h3 {
+    margin-block: 1.2em 0.5em;
+    line-height: var(--lh-tight);
+}
+
+.editor-shell--text .ProseMirror h1 {
+    font-size: var(--text-xl);
+}
+
+.editor-shell--text .ProseMirror h2 {
+    font-size: var(--text-lg);
+}
+
+.editor-shell--text .ProseMirror h3 {
+    font-size: var(--text-md);
+}
+
+.editor-shell--text .ProseMirror ul,
+.editor-shell--text .ProseMirror ol {
+    padding-left: var(--space-6);
+    margin-block: 0 1em;
+}
+
+.editor-shell--text .ProseMirror blockquote {
+    margin: var(--space-4) 0;
+    padding-left: var(--space-4);
+    border-left: 3px solid var(--color-accent);
+    color: var(--color-text-secondary);
+}
+
+.editor-shell--text .ProseMirror code {
+    padding: 2px 6px;
+    border-radius: var(--radius-1);
+    background: rgba(255, 255, 255, 0.08);
+    font-family: var(--font-family-mono);
+    font-size: 0.92em;
+}
+
+.editor-shell--text .ProseMirror pre {
+    overflow-x: auto;
+    padding: var(--space-4);
+    border-radius: var(--radius-2);
+    background: rgba(0, 0, 0, 0.32);
+}
+
+.editor-shell--text .ProseMirror img {
+    max-width: 100%;
+    border-radius: var(--radius-2);
+}
+
+.editor-shell--text .ProseMirror p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    color: var(--color-text-muted);
+    pointer-events: none;
+}
+
+@media (max-width: 767px) {
+    .editor-shell__meta,
+    .editor-shell__header,
+    .editor-shell__toolbar {
         padding-inline: var(--space-4);
     }
 }

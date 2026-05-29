@@ -75,7 +75,8 @@
 .project-grid,
 .tab-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 360px));
+    justify-content: start;
     gap: var(--space-6);
 }
 

@@ -14,7 +14,7 @@ const Header = () => {
     };
 
     return (
-        <header className="app-header u-content-width">
+        <header className="app-header">
             <div className="app-header__inner">
                 <div className="app-header__brand">
                     <Link to={user ? "/projects" : "/"}>Collab App</Link>

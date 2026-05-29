@@ -5,6 +5,10 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useEffect, useMemo, useState } from "react";
 import EditorToolbar from "./EditorToolbar";
+import Underline from "@tiptap/extension-underline";
+import TextAlign from "@tiptap/extension-text-align";
+import Image from "@tiptap/extension-image";
+import Placeholder from "@tiptap/extension-placeholder";
 
 const providerCache = new Map();
 
@@ -51,6 +55,22 @@ const TextEditor = ({ tab }) => {
                       StarterKit.configure({
                           history: false,
                       }),
+
+                      Underline,
+
+                      TextAlign.configure({
+                          types: ["heading", "paragraph"],
+                      }),
+
+                      Image.configure({
+                          inline: false,
+                          allowBase64: true,
+                      }),
+
+                      Placeholder.configure({
+                          placeholder: "Start writing together...",
+                      }),
+
                       Collaboration.configure({
                           document: provider.document,
                       }),
