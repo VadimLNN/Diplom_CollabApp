@@ -1,5 +1,5 @@
 /* src/app/styles/components/_app-shell.scss */
-@use "../tools/mixins" as *;
+@use "../tokens/mixins" as *;
 
 .app-shell {
   min-height: 100svh;

@@ -1,5 +1,5 @@
 /* src/app/styles/components/_card.scss */
-@use "../tools/mixins" as *;
+@use "../tokens/mixins" as *;
 
 .card {
   @include surface-card;

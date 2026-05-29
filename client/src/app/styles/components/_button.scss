@@ -1,4 +1,4 @@
-@use "../tools/mixins" as *;
+@use "../tokens/mixins" as *;
 
 .button {
   @include interactive-lift;
