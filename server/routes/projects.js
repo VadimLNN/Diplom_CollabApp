@@ -6,11 +6,8 @@ const authMiddleware = require("../middleware/authMiddleware");
 const checkProjectAccess = require("../middleware/checkProjectAccess");
 const { hasRole } = require("../middleware/checkRole");
 
-// --- СЕРВИС
 const projectService = require("../services/projectService");
 const tabService = require("../services/tabService");
-
-const pool = require("../db");
 
 router.use(authMiddleware);
 
@@ -96,7 +93,12 @@ router.post(
     "/",
     [
         // ✅ ВСЕ middleware в МАССИВЕ []
-        body("name").trim().notEmpty().withMessage("Project name is required").isLength({ max: 100 }).withMessage("Max 100 chars"),
+        body("name")
+            .trim()
+            .notEmpty()
+            .withMessage("Project name is required")
+            .isLength({ max: 100 })
+            .withMessage("Max 100 chars"),
         body("description").optional().trim().isLength({ max: 500 }),
 
         // ✅ НЕТ запятой здесь! Обработчик после массива
@@ -109,12 +111,15 @@ router.post(
 
         try {
             const userId = req.user.id;
-            const newProject = await projectService.createProject(userId, req.body);
+            const newProject = await projectService.createProject(
+                userId,
+                req.body,
+            );
             res.status(201).json(newProject);
         } catch (error) {
             res.status(400).json({ error: error.message });
         }
-    }
+    },
 );
 
 /**
@@ -140,10 +145,12 @@ router.post(
 // READ (ALL)
 router.get("/", async (req, res) => {
     try {
-        const projects = await projectService.getAllProjectsForUser(req.user.id);
+        const projects = await projectService.getAllProjectsForUser(
+            req.user.id,
+        );
         res.json(projects);
     } catch (error) {
-        console.error(error); // Ошибки на GET запросах лучше логировать на сервере
+        console.error(error);
         res.status(500).json({ error: "Failed to fetch projects" });
     }
 });
@@ -237,33 +244,36 @@ router.get("/:id", checkProjectAccess, async (req, res) => {
 // UPDATE
 router.put(
     "/:id",
-    // 3a. Middleware прав доступа остаются на своих местах
     [checkProjectAccess, hasRole(["owner"])],
 
-    // 3b. Добавляем те же правила валидации, что и для создания
     body("name")
         .trim()
         .notEmpty()
         .withMessage("Project name cannot be empty.")
         .isLength({ max: 100 })
         .withMessage("Project name cannot be more than 100 characters."),
-    body("description").optional().trim().isLength({ max: 500 }).withMessage("Description cannot be more than 500 characters."),
+    body("description")
+        .optional()
+        .trim()
+        .isLength({ max: 500 })
+        .withMessage("Description cannot be more than 500 characters."),
 
-    // 3c. Основной обработчик роута
     async (req, res) => {
-        // 3d. Проверяем результат валидации
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
 
         try {
-            const updatedProject = await projectService.updateProject(req.params.id, req.body);
+            const updatedProject = await projectService.updateProject(
+                req.params.id,
+                req.body,
+            );
             res.json(updatedProject);
         } catch (error) {
             res.status(400).json({ error: error.message });
         }
-    }
+    },
 );
 
 /**
@@ -288,34 +298,19 @@ router.put(
  *         description: Доступ запрещен (не владелец).
  */
 // DELETE - Удаление проекта
-router.delete("/:id", [checkProjectAccess, hasRole(["owner"])], async (req, res) => {
-    try {
-        await projectService.deleteProject(req.params.id);
-        res.status(200).json({ message: "Project deleted successfully" });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Failed to delete project" });
-    }
-});
-
-router.get("/:projectId/tabs", checkProjectAccess, async (req, res) => {
-    try {
-        const projectId = req.params.projectId;
-        const result = await pool.query(
-            `
-            SELECT id, title, type, ydoc_document_name, created_at, updated_at
-            FROM tabs 
-            WHERE project_id = $1 
-            ORDER BY created_at ASC
-        `,
-            [projectId]
-        );
-        res.json(result.rows);
-    } catch (error) {
-        console.error("Tabs error:", error);
-        res.status(500).json({ error: "Failed to load tabs" });
-    }
-});
+router.delete(
+    "/:id",
+    [checkProjectAccess, hasRole(["owner"])],
+    async (req, res) => {
+        try {
+            await projectService.deleteProject(req.params.id);
+            res.status(200).json({ message: "Project deleted successfully" });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: "Failed to delete project" });
+        }
+    },
+);
 
 router.get("/:projectId/tabs", checkProjectAccess, async (req, res) => {
     const tabs = await tabService.getTabsForProject(req.params.projectId);
@@ -324,14 +319,23 @@ router.get("/:projectId/tabs", checkProjectAccess, async (req, res) => {
 
 router.post(
     "/:projectId/tabs",
-    [checkProjectAccess, body("title").trim().notEmpty().withMessage("Title required"), body("type").isIn(["text", "board", "code", "mindmap"])],
+    [
+        checkProjectAccess,
+        body("title").trim().notEmpty().withMessage("Title required"),
+        body("type").isIn(["text", "board", "code", "mindmap"]),
+    ],
     async (req, res) => {
         const errors = validationResult(req);
-        if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+        if (!errors.isEmpty())
+            return res.status(400).json({ errors: errors.array() });
 
-        const newTab = await tabService.createTab(req.user.id, req.params.projectId, req.body);
+        const newTab = await tabService.createTab(
+            req.user.id,
+            req.params.projectId,
+            req.body,
+        );
         res.status(201).json(newTab);
-    }
+    },
 );
 
 module.exports = router;
