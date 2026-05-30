@@ -62,6 +62,69 @@ export function addInlineTabLink({
     return link;
 }
 
+export function addTextBlockToBoardElementLink({
+    ydoc,
+    sourceTab,
+    sourceBlock,
+    targetBoardTab,
+    targetElement,
+}) {
+    const linksMap = getLinksMap(ydoc);
+
+    if (
+        !linksMap ||
+        !sourceTab ||
+        !sourceBlock ||
+        !targetBoardTab ||
+        !targetElement
+    ) {
+        return null;
+    }
+
+    const linkId = createLinkId();
+
+    const elementLabel =
+        targetElement.customData?.label ||
+        targetElement.text ||
+        targetElement.type ||
+        "Board element";
+
+    const blockLabel =
+        sourceBlock.text?.trim().slice(0, 80) ||
+        sourceTab.title ||
+        "Text block";
+
+    const link = {
+        id: linkId,
+
+        source: {
+            tabId: sourceTab.id,
+            tabTitle: sourceTab.title,
+            tabType: "text",
+            anchorType: "text-block",
+            anchorId: sourceBlock.blockId,
+            label: blockLabel,
+        },
+
+        target: {
+            tabId: targetBoardTab.id,
+            tabTitle: targetBoardTab.title,
+            tabType: "board",
+            anchorType: "board-element",
+            anchorId: targetElement.id,
+            label: elementLabel,
+        },
+
+        createdAt: Date.now(),
+    };
+
+    ydoc.transact(() => {
+        linksMap.set(linkId, link);
+    }, LINK_ORIGIN);
+
+    return link;
+}
+
 export function getLinksArray(ydoc) {
     const linksMap = getLinksMap(ydoc);
 
@@ -70,4 +133,67 @@ export function getLinksArray(ydoc) {
     }
 
     return Array.from(linksMap.values());
+}
+
+export function addTextBlockToTextBlockLink({
+    ydoc,
+    sourceTab,
+    sourceBlock,
+    targetTextTab,
+    targetBlock,
+}) {
+    const linksMap = getLinksMap(ydoc);
+
+    if (
+        !linksMap ||
+        !sourceTab ||
+        !sourceBlock ||
+        !targetTextTab ||
+        !targetBlock
+    ) {
+        return null;
+    }
+
+    const linkId = createLinkId();
+
+    const sourceLabel =
+        sourceBlock.text?.trim().slice(0, 80) ||
+        sourceTab.title ||
+        "Text block";
+
+    const targetLabel =
+        targetBlock.label?.trim().slice(0, 80) ||
+        targetBlock.text?.trim().slice(0, 80) ||
+        targetTextTab.title ||
+        "Text block";
+
+    const link = {
+        id: linkId,
+
+        source: {
+            tabId: sourceTab.id,
+            tabTitle: sourceTab.title,
+            tabType: "text",
+            anchorType: "text-block",
+            anchorId: sourceBlock.blockId,
+            label: sourceLabel,
+        },
+
+        target: {
+            tabId: targetTextTab.id,
+            tabTitle: targetTextTab.title,
+            tabType: "text",
+            anchorType: "text-block",
+            anchorId: targetBlock.blockId,
+            label: targetLabel,
+        },
+
+        createdAt: Date.now(),
+    };
+
+    ydoc.transact(() => {
+        linksMap.set(linkId, link);
+    }, LINK_ORIGIN);
+
+    return link;
 }

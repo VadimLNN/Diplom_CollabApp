@@ -20,18 +20,23 @@ const InternalLinkNode = Node.create({
             linkId: {
                 default: null,
             },
+
             targetTabId: {
                 default: null,
             },
+
             targetTabType: {
                 default: "text",
             },
+
             targetAnchorType: {
                 default: "tab",
             },
+
             targetAnchorId: {
                 default: null,
             },
+
             targetLabel: {
                 default: "",
             },

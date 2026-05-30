@@ -2,6 +2,12 @@ import { Excalidraw } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { saveBoardElementAnchor } from "../../../shared/links/boardElementClipboard";
+import {
+    clearTextBlockAnchor,
+    getTextBlockAnchor,
+} from "../../../shared/links/textBlockClipboard";
 import { useHocusProvider } from "../../../shared/realtime/getHocusProvider";
 
 const LOCAL_ORIGIN = "local-excalidraw-change";
@@ -15,6 +21,13 @@ const BoardEditor = ({ tab, canEdit }) => {
         synced,
         error: syncError,
     } = useHocusProvider(tab);
+
+    const location = useLocation();
+    const navigate = useNavigate();
+    const { projectId } = useParams();
+
+    const [selectedElementIds, setSelectedElementIds] = useState({});
+    const [copiedElementNotice, setCopiedElementNotice] = useState("");
 
     const [apiReady, setApiReady] = useState(false);
 
@@ -125,7 +138,9 @@ const BoardEditor = ({ tab, canEdit }) => {
     }, [ydoc, sceneMap]);
 
     const handleChange = useCallback(
-        (elements) => {
+        (elements, appState) => {
+            setSelectedElementIds(appState?.selectedElementIds || {});
+
             if (!canEdit) {
                 return;
             }
@@ -164,8 +179,153 @@ const BoardEditor = ({ tab, canEdit }) => {
                 }, SYNC_INTERVAL_MS - elapsed);
             }
         },
-        [ydoc, sceneMap, synced, apiReady, flushLatestElements],
+        [canEdit, ydoc, sceneMap, synced, apiReady, flushLatestElements],
     );
+
+    const getSelectedBoardElement = useCallback(() => {
+        const excalidrawAPI = excalidrawAPIRef.current;
+
+        if (!excalidrawAPI) {
+            return null;
+        }
+
+        const selectedIds = Object.keys(selectedElementIds || {});
+
+        if (selectedIds.length !== 1) {
+            return null;
+        }
+
+        const selectedId = selectedIds[0];
+
+        const elements = excalidrawAPI.getSceneElements();
+
+        return elements.find((element) => element.id === selectedId) || null;
+    }, [selectedElementIds]);
+
+    const selectedBoardElement = useMemo(() => {
+        return getSelectedBoardElement();
+    }, [getSelectedBoardElement]);
+
+    const selectedInternalLink = selectedBoardElement?.customData?.internalLink;
+
+    const handleCopySelectedElementAnchor = useCallback(() => {
+        const selectedElement = getSelectedBoardElement();
+
+        if (!selectedElement) {
+            setCopiedElementNotice("Select exactly one board element first.");
+            return;
+        }
+
+        const anchor = {
+            tabId: tab.id,
+            tabTitle: tab.title,
+            tabType: "board",
+
+            anchorType: "board-element",
+            anchorId: selectedElement.id,
+
+            label:
+                selectedElement.customData?.label ||
+                selectedElement.text ||
+                selectedElement.type ||
+                "Board element",
+
+            elementType: selectedElement.type,
+            copiedAt: Date.now(),
+        };
+
+        saveBoardElementAnchor(anchor);
+        setCopiedElementNotice("Board element link copied.");
+    }, [getSelectedBoardElement, tab]);
+
+    const handleAttachTextBlockLinkToSelectedElement = useCallback(() => {
+        const selectedElement = getSelectedBoardElement();
+
+        if (!selectedElement) {
+            setCopiedElementNotice("Select exactly one board element first.");
+            return;
+        }
+
+        const textAnchor = getTextBlockAnchor();
+
+        if (!textAnchor || textAnchor.anchorType !== "text-block") {
+            setCopiedElementNotice(
+                "Copy paragraph anchor from text editor first.",
+            );
+            return;
+        }
+
+        const excalidrawAPI = excalidrawAPIRef.current;
+
+        if (!excalidrawAPI) {
+            return;
+        }
+
+        const elements = excalidrawAPI.getSceneElements();
+
+        const updatedElements = elements.map((element) => {
+            if (element.id !== selectedElement.id) {
+                return element;
+            }
+
+            return {
+                ...element,
+                customData: {
+                    ...(element.customData || {}),
+                    internalLink: {
+                        tabId: textAnchor.tabId,
+                        tabTitle: textAnchor.tabTitle,
+                        tabType: textAnchor.tabType,
+
+                        anchorType: textAnchor.anchorType,
+                        anchorId: textAnchor.anchorId,
+
+                        label: textAnchor.label,
+                        linkedAt: Date.now(),
+                    },
+                },
+            };
+        });
+
+        excalidrawAPI.updateScene({
+            elements: updatedElements,
+        });
+
+        latestElementsRef.current = updatedElements.map((element) => ({
+            ...element,
+        }));
+
+        flushLatestElements();
+
+        clearTextBlockAnchor();
+        setCopiedElementNotice("Paragraph anchor attached to board element.");
+    }, [getSelectedBoardElement, flushLatestElements]);
+
+    const handleOpenLinkedParagraph = useCallback(() => {
+        if (!selectedInternalLink || !projectId) {
+            return;
+        }
+
+        navigate(`/projects/${projectId}/tabs/${selectedInternalLink.tabId}`, {
+            state: {
+                targetTabType: selectedInternalLink.tabType,
+                targetAnchorType: selectedInternalLink.anchorType,
+                targetAnchorId: selectedInternalLink.anchorId,
+            },
+        });
+    }, [navigate, projectId, selectedInternalLink]);
+
+    useEffect(() => {
+        if (!copiedElementNotice) {
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            setCopiedElementNotice("");
+        }, 2200);
+
+        return () => clearTimeout(timer);
+    }, [copiedElementNotice]);
 
     useEffect(() => {
         initialSceneAppliedRef.current = false;
@@ -197,6 +357,45 @@ const BoardEditor = ({ tab, canEdit }) => {
         };
     }, []);
 
+    useEffect(() => {
+        if (!apiReady || !synced || !location.state) {
+            return;
+        }
+
+        if (location.state.targetAnchorType !== "board-element") {
+            return;
+        }
+
+        const targetAnchorId = location.state.targetAnchorId;
+
+        if (!targetAnchorId || !excalidrawAPIRef.current) {
+            return;
+        }
+
+        const api = excalidrawAPIRef.current;
+        const elements = api.getSceneElements();
+        const targetElement = elements.find(
+            (element) => element.id === targetAnchorId,
+        );
+
+        if (!targetElement) {
+            return;
+        }
+
+        api.updateScene({
+            appState: {
+                selectedElementIds: {
+                    [targetElement.id]: true,
+                },
+            },
+        });
+
+        api.scrollToContent([targetElement], {
+            fitToContent: true,
+            animate: true,
+        });
+    }, [apiReady, synced, location.state]);
+
     if (syncError) {
         return <div className="card">⚠️ {syncError}. Try reconnecting.</div>;
     }
@@ -207,7 +406,7 @@ const BoardEditor = ({ tab, canEdit }) => {
 
     return (
         <section className="editor-shell editor-shell--board">
-            <div className="editor-shell__meta">
+            <div className="editor-shell__meta editor-shell__meta--with-actions">
                 <span
                     className={`status-chip ${
                         connected
@@ -218,6 +417,42 @@ const BoardEditor = ({ tab, canEdit }) => {
                     <span className="status-chip__dot" aria-hidden="true" />
                     {connected ? "Connected" : "Disconnected"}
                 </span>
+
+                {canEdit && (
+                    <div className="board-link-tools">
+                        {copiedElementNotice && (
+                            <span className="board-link-tools__notice">
+                                {copiedElementNotice}
+                            </span>
+                        )}
+
+                        <button
+                            type="button"
+                            className="button button--secondary board-link-tools__button"
+                            onClick={handleCopySelectedElementAnchor}
+                        >
+                            Copy selected element link
+                        </button>
+
+                        <button
+                            type="button"
+                            className="button button--secondary board-link-tools__button"
+                            onClick={handleAttachTextBlockLinkToSelectedElement}
+                        >
+                            Attach paragraph anchor
+                        </button>
+
+                        {selectedInternalLink && (
+                            <button
+                                type="button"
+                                className="button button--secondary board-link-tools__button"
+                                onClick={handleOpenLinkedParagraph}
+                            >
+                                Open linked paragraph
+                            </button>
+                        )}
+                    </div>
+                )}
             </div>
 
             <div className="editor-shell__body editor-shell__body--board">

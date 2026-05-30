@@ -6,11 +6,33 @@ import Underline from "@tiptap/extension-underline";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
+
 import { useHocusProvider } from "../../../../shared/realtime/getHocusProvider";
 import EditorToolbar from "./EditorToolbar";
 
-import { addInlineTabLink } from "../../../../shared/realtime/linkIndex";
+import {
+    addInlineTabLink,
+    addTextBlockToBoardElementLink,
+    addTextBlockToTextBlockLink,
+} from "../../../../shared/realtime/linkIndex";
+
+import {
+    clearBoardElementAnchor,
+    getBoardElementAnchor,
+} from "../../../../shared/links/boardElementClipboard";
+
+import {
+    clearTextBlockAnchor,
+    getTextBlockAnchor,
+    saveTextBlockAnchor,
+} from "../../../../shared/links/textBlockClipboard";
+
+import BlockIdExtension from "../extensions/BlockIdExtension";
 import InternalLinkNode from "../extensions/InternalLinkNode";
+import { getCurrentTextBlock } from "../utils/getCurrentTextBlock";
+
 import InternalLinkPicker from "./InternalLinkPicker";
 
 const TextEditorReady = ({
@@ -20,6 +42,8 @@ const TextEditorReady = ({
     tab,
     projectTabs = [],
 }) => {
+    const location = useLocation();
+
     const editor = useEditor(
         {
             immediatelyRender: false,
@@ -45,6 +69,8 @@ const TextEditorReady = ({
                     placeholder: "Start writing together...",
                 }),
 
+                BlockIdExtension,
+
                 InternalLinkNode,
 
                 Collaboration.configure({
@@ -61,9 +87,54 @@ const TextEditorReady = ({
         [provider],
     );
 
-    const availableTargetTabs = projectTabs.filter(
-        (projectTab) => projectTab.id !== tab.id,
-    );
+    useEffect(() => {
+        if (!editor) {
+            return;
+        }
+
+        editor.setEditable(canEdit);
+    }, [editor, canEdit]);
+
+    useEffect(() => {
+        if (!editor) {
+            return;
+        }
+
+        if (location.state?.targetAnchorType !== "text-block") {
+            return;
+        }
+
+        const targetBlockId = location.state.targetAnchorId;
+
+        if (!targetBlockId) {
+            return;
+        }
+
+        const frameId = requestAnimationFrame(() => {
+            const element = editor.view.dom.querySelector(
+                `[data-block-id="${targetBlockId}"]`,
+            );
+
+            if (!element) {
+                return;
+            }
+
+            element.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+            });
+
+            element.classList.add("text-block--highlighted");
+
+            window.setTimeout(() => {
+                element.classList.remove("text-block--highlighted");
+            }, 1600);
+        });
+
+        return () => {
+            cancelAnimationFrame(frameId);
+        };
+    }, [editor, location.state]);
 
     const handleInsertTabLink = (targetTab) => {
         if (!editor || !canEdit || !targetTab) {
@@ -98,6 +169,179 @@ const TextEditorReady = ({
             .run();
     };
 
+    const handleInsertBoardElementLink = () => {
+        if (!editor || !canEdit) {
+            return;
+        }
+
+        const copiedAnchor = getBoardElementAnchor();
+
+        if (!copiedAnchor || copiedAnchor.anchorType !== "board-element") {
+            alert(
+                "Сначала выдели элемент на доске и нажми Copy selected element link.",
+            );
+            return;
+        }
+
+        const currentBlock = getCurrentTextBlock(editor);
+
+        if (!currentBlock?.blockId) {
+            alert("Поставь курсор внутрь абзаца или заголовка.");
+            return;
+        }
+
+        const targetBoardTab = {
+            id: copiedAnchor.tabId,
+            title: copiedAnchor.tabTitle,
+            type: "board",
+        };
+
+        const targetElement = {
+            id: copiedAnchor.anchorId,
+            type: copiedAnchor.elementType,
+            text: copiedAnchor.label,
+            customData: {
+                label: copiedAnchor.label,
+            },
+        };
+
+        const link = addTextBlockToBoardElementLink({
+            ydoc: provider.document,
+            sourceTab: tab,
+            sourceBlock: currentBlock,
+            targetBoardTab,
+            targetElement,
+        });
+
+        if (!link) {
+            return;
+        }
+
+        editor
+            .chain()
+            .focus()
+            .insertInternalLink({
+                linkId: link.id,
+
+                targetTabId: link.target.tabId,
+                targetTabType: link.target.tabType,
+
+                targetAnchorType: link.target.anchorType,
+                targetAnchorId: link.target.anchorId,
+
+                targetLabel: link.target.label,
+            })
+            .run();
+
+        clearBoardElementAnchor();
+    };
+
+    const handleCopyCurrentParagraphLink = () => {
+        if (!editor || !canEdit) {
+            return;
+        }
+
+        const currentBlock = getCurrentTextBlock(editor);
+
+        if (!currentBlock?.blockId) {
+            alert("Поставь курсор внутрь абзаца или заголовка.");
+            return;
+        }
+
+        const label =
+            currentBlock.text?.trim().slice(0, 100) ||
+            tab.title ||
+            "Text paragraph";
+
+        const anchor = {
+            tabId: tab.id,
+            tabTitle: tab.title,
+            tabType: "text",
+
+            anchorType: "text-block",
+            anchorId: currentBlock.blockId,
+
+            label,
+            blockType: currentBlock.type,
+            copiedAt: Date.now(),
+        };
+
+        saveTextBlockAnchor(anchor);
+
+        alert("Paragraph link copied.");
+    };
+
+    const handleInsertTextBlockLink = () => {
+        if (!editor || !canEdit) {
+            return;
+        }
+
+        const copiedAnchor = getTextBlockAnchor();
+
+        if (!copiedAnchor || copiedAnchor.anchorType !== "text-block") {
+            alert("Сначала скопируй абзац через Copy paragraph anchor.");
+            return;
+        }
+
+        const currentBlock = getCurrentTextBlock(editor);
+
+        if (!currentBlock?.blockId) {
+            alert("Поставь курсор внутрь абзаца или заголовка.");
+            return;
+        }
+
+        if (
+            String(copiedAnchor.tabId) === String(tab.id) &&
+            String(copiedAnchor.anchorId) === String(currentBlock.blockId)
+        ) {
+            alert("Нельзя сослаться на тот же самый абзац.");
+            return;
+        }
+
+        const targetTextTab = {
+            id: copiedAnchor.tabId,
+            title: copiedAnchor.tabTitle,
+            type: "text",
+        };
+
+        const targetBlock = {
+            blockId: copiedAnchor.anchorId,
+            label: copiedAnchor.label,
+            text: copiedAnchor.label,
+            type: copiedAnchor.blockType,
+        };
+
+        const link = addTextBlockToTextBlockLink({
+            ydoc: provider.document,
+            sourceTab: tab,
+            sourceBlock: currentBlock,
+            targetTextTab,
+            targetBlock,
+        });
+
+        if (!link) {
+            return;
+        }
+
+        editor
+            .chain()
+            .focus()
+            .insertInternalLink({
+                linkId: link.id,
+
+                targetTabId: link.target.tabId,
+                targetTabType: link.target.tabType,
+
+                targetAnchorType: link.target.anchorType,
+                targetAnchorId: link.target.anchorId,
+
+                targetLabel: link.target.label,
+            })
+            .run();
+
+        clearTextBlockAnchor();
+    };
+
     if (!editor) {
         return <div className="card">🔄 Initializing editor...</div>;
     }
@@ -117,12 +361,41 @@ const TextEditorReady = ({
                 </span>
 
                 {canEdit && (
-                    <InternalLinkPicker
-                        currentTab={tab}
-                        projectTabs={projectTabs}
-                        disabled={!editor}
-                        onSelect={handleInsertTabLink}
-                    />
+                    <div className="editor-link-actions">
+                        <InternalLinkPicker
+                            currentTab={tab}
+                            projectTabs={projectTabs}
+                            disabled={!editor}
+                            onSelect={handleInsertTabLink}
+                        />
+
+                        <button
+                            type="button"
+                            className="button button--secondary editor-link-actions__button"
+                            onClick={handleInsertBoardElementLink}
+                            disabled={!editor}
+                        >
+                            Insert board element
+                        </button>
+
+                        <button
+                            type="button"
+                            className="button button--secondary editor-link-actions__button"
+                            onClick={handleInsertTextBlockLink}
+                            disabled={!editor}
+                        >
+                            Insert paragraph link
+                        </button>
+
+                        <button
+                            type="button"
+                            className="button button--secondary editor-link-actions__button"
+                            onClick={handleCopyCurrentParagraphLink}
+                            disabled={!editor}
+                        >
+                            Copy paragraph anchor
+                        </button>
+                    </div>
                 )}
             </div>
 

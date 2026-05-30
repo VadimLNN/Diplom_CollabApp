@@ -39,9 +39,12 @@ const InternalLinkView = ({ node }) => {
             data-target-anchor-type={targetAnchorType}
             data-target-anchor-id={targetAnchorId}
             onClick={handleClick}
-            title={`Open ${targetLabel || "linked tab"}`}
+            title={`Open ${targetLabel || "linked item"}`}
         >
-            <span className="internal-link__icon">↗</span>
+            <span className="internal-link__icon">
+                {targetAnchorType === "board-element" ? "⬚" : "↗"}
+            </span>
+
             <span className="internal-link__label">
                 {targetLabel || "Untitled"}
             </span>
