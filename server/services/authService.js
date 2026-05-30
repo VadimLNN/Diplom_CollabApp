@@ -1,10 +1,32 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const userRepository = require("../repositories/userRepository");
-
-const JWT_SECRET = process.env.JWT_SECRET;
+const env = require("../config/env");
 
 class AuthService {
+    createAccessToken(user) {
+        const payload = {
+            id: user.id,
+            username: user.username,
+        };
+
+        return jwt.sign(payload, env.jwtSecret, {
+            expiresIn: env.jwtAccessExpiresIn,
+        });
+    }
+
+    createRefreshToken(user) {
+        const payload = {
+            id: user.id,
+            username: user.username,
+            type: "refresh",
+        };
+
+        return jwt.sign(payload, env.jwtRefreshSecret, {
+            expiresIn: env.jwtRefreshExpiresIn,
+        });
+    }
+
     async register(userData) {
         const { username, email, password } = userData;
 
@@ -53,14 +75,48 @@ class AuthService {
             throw error;
         }
 
-        const payload = {
-            id: user.id,
-            username: user.username,
+        const accessToken = this.createAccessToken(user);
+        const refreshToken = this.createRefreshToken(user);
+
+        return {
+            accessToken,
+            refreshToken,
         };
+    }
 
-        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" });
+    async refresh(refreshToken) {
+        if (!refreshToken) {
+            const error = new Error("Refresh token is required");
+            error.statusCode = 401;
+            throw error;
+        }
 
-        return { token };
+        let decoded;
+
+        try {
+            decoded = jwt.verify(refreshToken, env.jwtRefreshSecret);
+        } catch (error) {
+            const authError = new Error("Refresh token is invalid or expired");
+            authError.statusCode = 401;
+            throw authError;
+        }
+
+        if (decoded.type !== "refresh") {
+            const error = new Error("Invalid token type");
+            error.statusCode = 401;
+            throw error;
+        }
+
+        const user = await userRepository.findById(decoded.id);
+        if (!user) {
+            const error = new Error("User not found");
+            error.statusCode = 401;
+            throw error;
+        }
+
+        const accessToken = this.createAccessToken(user);
+
+        return { accessToken };
     }
 
     async getUserInfo(userId) {
