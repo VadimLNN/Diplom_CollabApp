@@ -7,6 +7,7 @@ const swaggerJsdoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
 const { loginLimiter } = require("./middleware/rateLimiter");
 const tabsRoutes = require("./routes/tabs");
+const cookieParser = require("cookie-parser");
 
 const errorHandler = require("./middleware/errorHandler");
 
@@ -14,6 +15,8 @@ const app = express();
 const server = http.createServer(app);
 
 app.use(express.json({ limit: "1mb" }));
+app.use(cookieParser());
+
 app.use(
     cors({
         origin: process.env.CLIENT_URL,
@@ -23,7 +26,6 @@ app.use(
 );
 
 app.use("/api/auth/login", loginLimiter);
-
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/projects", require("./routes/projects"));
 app.use("/api", tabsRoutes);
