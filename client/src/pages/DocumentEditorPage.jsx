@@ -9,6 +9,7 @@ const DocumentEditorPage = () => {
 
     const [tab, setTab] = useState(null);
     const [userRole, setUserRole] = useState(null);
+    const [projectTabs, setProjectTabs] = useState([]);
 
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
@@ -19,13 +20,16 @@ const DocumentEditorPage = () => {
                 setIsLoading(true);
                 setError("");
 
-                const [tabResponse, roleResponse] = await Promise.all([
-                    api.get(`/projects/${projectId}/tabs/${tabId}`),
-                    api.get(`/projects/${projectId}/permissions/my-role`),
-                ]);
+                const [tabResponse, roleResponse, tabsResponse] =
+                    await Promise.all([
+                        api.get(`/projects/${projectId}/tabs/${tabId}`),
+                        api.get(`/projects/${projectId}/permissions/my-role`),
+                        api.get(`/projects/${projectId}/tabs`),
+                    ]);
 
                 setTab(tabResponse.data);
                 setUserRole(roleResponse.data.role);
+                setProjectTabs(tabsResponse.data);
             } catch (err) {
                 setError("Failed to load editor");
                 console.error(err);
@@ -80,7 +84,11 @@ const DocumentEditorPage = () => {
                 </div>
             </header>
 
-            <EditorRenderer tab={tab} userRole={userRole} />
+            <EditorRenderer
+                tab={tab}
+                userRole={userRole}
+                projectTabs={projectTabs}
+            />
         </div>
     );
 };

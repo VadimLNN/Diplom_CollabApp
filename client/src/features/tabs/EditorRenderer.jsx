@@ -1,7 +1,7 @@
 import BoardEditor from "./board/BoardEditor";
 import TextEditor from "./text/ui/TextEditor";
 
-const EditorRenderer = ({ tab, userRole }) => {
+const EditorRenderer = ({ tab, userRole, projectTabs = [] }) => {
     if (!tab) {
         return <div className="card">Select a tab to start working.</div>;
     }
@@ -10,21 +10,39 @@ const EditorRenderer = ({ tab, userRole }) => {
     const isViewer = userRole === "viewer";
 
     const renderEditor = () => {
-        if (tab.type === "text") {
-            return <TextEditor tab={tab} canEdit={canEdit} />;
-        }
+        switch (tab.type) {
+            case "text":
+                return (
+                    <TextEditor
+                        tab={tab}
+                        canEdit={canEdit}
+                        projectTabs={projectTabs}
+                    />
+                );
 
-        if (tab.type === "board") {
-            return <BoardEditor tab={tab} canEdit={canEdit} />;
-        }
+            case "board":
+                return (
+                    <BoardEditor
+                        tab={tab}
+                        canEdit={canEdit}
+                        projectTabs={projectTabs}
+                    />
+                );
 
-        if (tab.type === "code") {
-            return (
-                <div className="card">Code editor is not implemented yet.</div>
-            );
-        }
+            case "code":
+                return (
+                    <div className="card">
+                        Code editor is not implemented yet.
+                    </div>
+                );
 
-        return <div className="card">Unknown tab type: {tab.type}</div>;
+            default:
+                return (
+                    <div className="card">
+                        Unknown tab type: <strong>{tab.type}</strong>
+                    </div>
+                );
+        }
     };
 
     return (
