@@ -9,7 +9,17 @@ import StarterKit from "@tiptap/starter-kit";
 import { useHocusProvider } from "../../../../shared/realtime/getHocusProvider";
 import EditorToolbar from "./EditorToolbar";
 
-const TextEditorReady = ({ provider, connected, canEdit }) => {
+import { addInlineTabLink } from "../../../../shared/realtime/linkIndex";
+import InternalLinkNode from "../extensions/InternalLinkNode";
+import InternalLinkPicker from "./InternalLinkPicker";
+
+const TextEditorReady = ({
+    provider,
+    connected,
+    canEdit,
+    tab,
+    projectTabs = [],
+}) => {
     const editor = useEditor(
         {
             immediatelyRender: false,
@@ -35,6 +45,8 @@ const TextEditorReady = ({ provider, connected, canEdit }) => {
                     placeholder: "Start writing together...",
                 }),
 
+                InternalLinkNode,
+
                 Collaboration.configure({
                     document: provider.document,
                 }),
@@ -49,13 +61,50 @@ const TextEditorReady = ({ provider, connected, canEdit }) => {
         [provider],
     );
 
+    const availableTargetTabs = projectTabs.filter(
+        (projectTab) => projectTab.id !== tab.id,
+    );
+
+    const handleInsertTabLink = (targetTab) => {
+        if (!editor || !canEdit || !targetTab) {
+            return;
+        }
+
+        const link = addInlineTabLink({
+            ydoc: provider.document,
+            sourceTab: tab,
+            targetTab,
+            sourceType: "text",
+        });
+
+        if (!link) {
+            return;
+        }
+
+        editor
+            .chain()
+            .focus()
+            .insertInternalLink({
+                linkId: link.id,
+
+                targetTabId: link.target.tabId,
+                targetTabType: link.target.tabType,
+
+                targetAnchorType: link.target.anchorType,
+                targetAnchorId: link.target.anchorId,
+
+                targetLabel: link.target.label,
+            })
+            .run();
+    };
+
     if (!editor) {
         return <div className="card">🔄 Initializing editor...</div>;
     }
 
     return (
         <section className="editor-shell editor-shell--text">
-            <div className="editor-shell__meta">
+            <div className="editor-shell__meta editor-shell__meta--with-actions">
                 <span
                     className={`status-chip ${
                         connected
@@ -66,6 +115,15 @@ const TextEditorReady = ({ provider, connected, canEdit }) => {
                     <span className="status-chip__dot" aria-hidden="true" />
                     {connected ? "Connected" : "Disconnected"}
                 </span>
+
+                {canEdit && (
+                    <InternalLinkPicker
+                        currentTab={tab}
+                        projectTabs={projectTabs}
+                        disabled={!editor}
+                        onSelect={handleInsertTabLink}
+                    />
+                )}
             </div>
 
             {canEdit && (
@@ -81,7 +139,7 @@ const TextEditorReady = ({ provider, connected, canEdit }) => {
     );
 };
 
-const TextEditor = ({ tab, canEdit }) => {
+const TextEditor = ({ tab, canEdit, projectTabs = [] }) => {
     const { provider, connected, synced, error } = useHocusProvider(tab);
 
     if (error) {
@@ -97,6 +155,8 @@ const TextEditor = ({ tab, canEdit }) => {
             provider={provider}
             connected={connected}
             canEdit={canEdit}
+            tab={tab}
+            projectTabs={projectTabs}
         />
     );
 };
