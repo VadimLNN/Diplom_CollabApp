@@ -48,7 +48,7 @@ const BoardEditor = ({ tab, canEdit }) => {
             const token = localStorage.getItem("token");
             if (token) {
                 const payload = JSON.parse(atob(token.split(".")[1]));
-                return payload?.name || payload?.sub || null;
+                return payload?.username || payload?.sub || null;
             }
         } catch {}
         return null;
@@ -56,8 +56,9 @@ const BoardEditor = ({ tab, canEdit }) => {
 
     const { handlePointerUpdate: onPointerUpdate } = useBoardAwareness(
         provider,
-        excalidrawAPIRef.current,
+        excalidrawAPIRef,
         username,
+        apiReady,
     );
 
     const getSelectedBoardElement = useCallback(() => {

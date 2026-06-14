@@ -19,12 +19,13 @@ function hashClientId(clientId) {
     return Math.abs(hash);
 }
 
-export function useBoardAwareness(provider, excalidrawAPI, username) {
+export function useBoardAwareness(provider, excalidrawAPIRef, username, apiReady) {
     const handlePointerUpdateRef = useRef(null);
 
     useEffect(() => {
-        if (!provider || !excalidrawAPI) return;
+        if (!provider || !apiReady || !excalidrawAPIRef?.current) return;
 
+        const api = excalidrawAPIRef.current;
         const awareness = provider.awareness;
         const clientId = awareness.clientID;
         const color = COLORS[hashClientId(clientId) % COLORS.length];
@@ -56,15 +57,18 @@ export function useBoardAwareness(provider, excalidrawAPI, username) {
                     });
                 }
             });
-            excalidrawAPI.updateScene({ collaborators });
+            api.updateScene({ collaborators });
         };
 
         awareness.on("change", updateCollaborators);
+        // Запускаем сразу, чтобы локальный юзер зарегистрировался
+        updateCollaborators();
+
         return () => {
             awareness.off("change", updateCollaborators);
             handlePointerUpdateRef.current = null;
         };
-    }, [provider, excalidrawAPI, username]);
+    }, [provider, excalidrawAPIRef, username, apiReady]);
 
     const handlePointerUpdate = useCallback((payload) => {
         handlePointerUpdateRef.current?.(payload);
