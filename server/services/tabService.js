@@ -22,6 +22,7 @@ class TabService {
 
     async createTab(userId, projectId, tabData) {
         const title = tabData.title?.trim();
+        const description = tabData.description?.trim() || null;
 
         if (!title) {
             const error = new Error("Title is required");
@@ -43,6 +44,7 @@ class TabService {
         return tabRepository.create({
             ...tabData,
             title,
+            description,
             projectId,
         });
     }
@@ -62,8 +64,26 @@ class TabService {
         ]);
 
         const newTitle =
-            tabData.title !== undefined ? tabData.title : tab.title;
+            tabData.title !== undefined ? tabData.title.trim() : tab.title;
+        const newDescription =
+            tabData.description !== undefined
+                ? tabData.description?.trim() || null
+                : tab.description;
         const newType = tabData.type !== undefined ? tabData.type : tab.type;
+
+        if (!newTitle || newTitle.length > 100) {
+            const error = new Error("Title must be between 1 and 100 characters");
+            error.statusCode = 400;
+            throw error;
+        }
+
+        if (newDescription && newDescription.length > 500) {
+            const error = new Error(
+                "Description cannot be more than 500 characters",
+            );
+            error.statusCode = 400;
+            throw error;
+        }
 
         if (!["text", "board"].includes(newType)) {
             const error = new Error("Invalid tab type. Must be: text or board");
@@ -73,6 +93,7 @@ class TabService {
 
         return tabRepository.update(tabId, {
             title: newTitle,
+            description: newDescription,
             type: newType,
         });
     }

@@ -6,6 +6,8 @@ const checkProjectAccess = require("../middleware/checkProjectAccess");
 const { hasRole } = require("../middleware/checkRole");
 const tabService = require("../services/tabService");
 const asyncHandler = require("../utils/asyncHandler");
+const validate = require("../middleware/validate");
+const { updateTabValidator } = require("../validators/tabValidators");
 
 router.use(authMiddleware);
 
@@ -27,6 +29,8 @@ router.put(
     "/projects/:projectId/tabs/:tabId",
     checkProjectAccess,
     hasRole(["owner", "editor"]),
+    ...updateTabValidator,
+    validate,
     asyncHandler(async (req, res) => {
         const updatedTab = await tabService.updateTab(
             req.user.id,
