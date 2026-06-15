@@ -1,25 +1,11 @@
 import { useCallback, useEffect, useRef } from "react";
 
-const COLORS = [
-    "#e44d26",
-    "#4d7c0f",
-    "#7c3aed",
-    "#db2777",
-    "#2563eb",
-    "#65a30d",
-    "#c026d3",
-    "#0891b2",
-];
-
-function hashClientId(clientId) {
-    let hash = 0;
-    for (let i = 0; i < clientId.length; i++) {
-        hash = (hash * 31 + clientId.charCodeAt(i)) | 0;
-    }
-    return Math.abs(hash);
-}
-
-export function useBoardAwareness(provider, excalidrawAPIRef, username, apiReady) {
+export function useBoardAwareness(
+    provider,
+    excalidrawAPIRef,
+    collaborationUser,
+    apiReady,
+) {
     const handlePointerUpdateRef = useRef(null);
 
     useEffect(() => {
@@ -27,13 +13,8 @@ export function useBoardAwareness(provider, excalidrawAPIRef, username, apiReady
 
         const api = excalidrawAPIRef.current;
         const awareness = provider.awareness;
-        const clientId = awareness.clientID;
-        const color = COLORS[hashClientId(clientId) % COLORS.length];
 
-        awareness.setLocalStateField("user", {
-            name: username || "Anonymous",
-            color,
-        });
+        awareness.setLocalStateField("user", collaborationUser);
 
         handlePointerUpdateRef.current = (payload) => {
             awareness.setLocalStateField("boardPointer", {
@@ -67,7 +48,7 @@ export function useBoardAwareness(provider, excalidrawAPIRef, username, apiReady
             awareness.off("change", updateCollaborators);
             handlePointerUpdateRef.current = null;
         };
-    }, [provider, excalidrawAPIRef, username, apiReady]);
+    }, [provider, excalidrawAPIRef, collaborationUser, apiReady]);
 
     const handlePointerUpdate = useCallback((payload) => {
         handlePointerUpdateRef.current?.(payload);
