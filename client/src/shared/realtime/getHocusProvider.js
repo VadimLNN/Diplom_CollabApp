@@ -46,7 +46,7 @@ export function useHocusProvider(tab) {
                 tab.ydoc_document_name,
                 event,
             );
-            setError("Realtime connection error");
+            setError("Ошибка подключения в реальном времени");
             setConnected(false);
         };
 

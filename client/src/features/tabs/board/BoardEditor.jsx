@@ -86,7 +86,7 @@ const BoardEditor = ({ tab, canEdit }) => {
         const selectedElement = getSelectedBoardElement();
 
         if (!selectedElement) {
-            setCopiedElementNotice("Select exactly one board element first.");
+            setCopiedElementNotice("Сначала выберите один элемент на доске.");
             return;
         }
 
@@ -102,21 +102,21 @@ const BoardEditor = ({ tab, canEdit }) => {
                 selectedElement.customData?.label ||
                 selectedElement.text ||
                 selectedElement.type ||
-                "Board element",
+                "Элемент доски",
 
             elementType: selectedElement.type,
             copiedAt: Date.now(),
         };
 
         saveBoardElementAnchor(anchor);
-        setCopiedElementNotice("Board element link copied.");
+        setCopiedElementNotice("Ссылка на элемент доски скопирована.");
     }, [getSelectedBoardElement, tab]);
 
     const handleAttachTextBlockLinkToSelectedElement = useCallback(() => {
         const selectedElement = getSelectedBoardElement();
 
         if (!selectedElement) {
-            setCopiedElementNotice("Select exactly one board element first.");
+            setCopiedElementNotice("Сначала выберите один элемент на доске.");
             return;
         }
 
@@ -124,7 +124,7 @@ const BoardEditor = ({ tab, canEdit }) => {
 
         if (!textAnchor || textAnchor.anchorType !== "text-block") {
             setCopiedElementNotice(
-                "Copy paragraph anchor from text editor first.",
+                "Сначала скопируйте ссылку на абзац в текстовом редакторе.",
             );
             return;
         }
@@ -150,7 +150,7 @@ const BoardEditor = ({ tab, canEdit }) => {
         updateBoardElement(updatedElement);
 
         clearTextBlockAnchor();
-        setCopiedElementNotice("Paragraph anchor attached to board element.");
+        setCopiedElementNotice("Ссылка на абзац прикреплена к элементу доски.");
     }, [getSelectedBoardElement, updateBoardElement]);
 
     const handleOpenLinkedParagraph = useCallback(() => {
@@ -216,11 +216,15 @@ const BoardEditor = ({ tab, canEdit }) => {
     ]);
 
     if (syncError) {
-        return <div className="card">⚠️ {syncError}. Try reconnecting.</div>;
+        return (
+            <div className="card">
+                ⚠️ {syncError}. Попробуйте подключиться повторно.
+            </div>
+        );
     }
 
     if (!provider || !synced) {
-        return <div className="card">🔄 Loading board state...</div>;
+        return <div className="card">🔄 Загрузка состояния доски...</div>;
     }
 
     return (
@@ -234,7 +238,7 @@ const BoardEditor = ({ tab, canEdit }) => {
                     }`}
                 >
                     <span className="status-chip__dot" aria-hidden="true" />
-                    {connected ? "Connected" : "Disconnected"}
+                    {connected ? "Подключено" : "Нет подключения"}
                 </span>
 
                 {canEdit && (
@@ -250,7 +254,7 @@ const BoardEditor = ({ tab, canEdit }) => {
                             className="button button--secondary board-link-tools__button"
                             onClick={handleCopySelectedElementAnchor}
                         >
-                            Copy selected element link
+                            Копировать ссылку на элемент
                         </button>
 
                         <button
@@ -258,7 +262,7 @@ const BoardEditor = ({ tab, canEdit }) => {
                             className="button button--secondary board-link-tools__button"
                             onClick={handleAttachTextBlockLinkToSelectedElement}
                         >
-                            Attach paragraph anchor
+                            Прикрепить ссылку на абзац
                         </button>
 
                         {selectedInternalLink && (
@@ -267,7 +271,7 @@ const BoardEditor = ({ tab, canEdit }) => {
                                 className="button button--secondary board-link-tools__button"
                                 onClick={handleOpenLinkedParagraph}
                             >
-                                Open linked paragraph
+                                Открыть связанный абзац
                             </button>
                         )}
                     </div>
@@ -276,6 +280,7 @@ const BoardEditor = ({ tab, canEdit }) => {
 
             <div className="editor-shell__body editor-shell__body--board">
                 <Excalidraw
+                    langCode="ru-RU"
                     theme="dark"
                     viewModeEnabled={!canEdit}
                     onPointerUpdate={onPointerUpdate}

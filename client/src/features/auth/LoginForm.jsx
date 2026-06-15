@@ -21,13 +21,13 @@ const LoginForm = () => {
         e.preventDefault();
 
         await toast.promise(login({ username, password }), {
-            loading: "Logging in...",
+            loading: "Выполняется вход...",
             success: () => {
                 navigate("/projects");
-                return <b>Welcome back!</b>;
+                return <b>С возвращением!</b>;
             },
             error: (error) => (
-                <b>{error.response?.data?.error || "Login failed!"}</b>
+                <b>{error.response?.data?.error || "Не удалось войти!"}</b>
             ),
         });
     };
@@ -35,7 +35,7 @@ const LoginForm = () => {
     return (
         <section className="card form form--auth" aria-labelledby="login-title">
             <div className="card__head">
-                <h1 id="login-title">Login</h1>
+                <h1 id="login-title">Вход</h1>
             </div>
 
             <form className="form" onSubmit={handleSubmit}>

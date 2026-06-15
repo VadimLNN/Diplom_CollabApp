@@ -1,11 +1,11 @@
 const getTabTypeLabel = (type) => {
     switch (type) {
         case "text":
-            return "Text";
+            return "Текст";
         case "board":
-            return "Board";
+            return "Доска";
         default:
-            return type || "Tab";
+            return type || "Вкладка";
     }
 };
 
@@ -54,7 +54,7 @@ const InternalLinkPicker = ({
 
     return (
         <div className="internal-link-picker">
-            <span className="internal-link-picker__label">Link</span>
+            <span className="internal-link-picker__label">Ссылка</span>
 
             <div className="internal-link-picker__control">
                 <select
@@ -62,10 +62,10 @@ const InternalLinkPicker = ({
                     defaultValue=""
                     disabled={disabled}
                     onChange={handleChange}
-                    aria-label="Insert link to tab"
+                    aria-label="Вставить ссылку на вкладку"
                 >
                     <option value="" disabled>
-                        Insert link to tab...
+                        Вставить ссылку на вкладку...
                     </option>
 
                     {availableTabs.map((projectTab) => (

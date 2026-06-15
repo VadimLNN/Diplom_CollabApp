@@ -13,16 +13,16 @@ const ChangePasswordForm = () => {
         await toast.promise(
             api.put("/auth/change-password", { currentPassword, newPassword }),
             {
-                loading: "Updating password...",
+                loading: "Обновление пароля...",
                 success: () => {
                     setCurrentPassword("");
                     setNewPassword("");
-                    return <b>Password updated successfully!</b>;
+                    return <b>Пароль успешно обновлен!</b>;
                 },
                 error: (err) => (
                     <b>
                         {err.response?.data?.error ||
-                            "Failed to change password."}
+                            "Не удалось изменить пароль."}
                     </b>
                 ),
             },
@@ -32,19 +32,19 @@ const ChangePasswordForm = () => {
     return (
         <Card>
             <div className="card__head">
-                <h3>Change Password</h3>
+                <h3>Изменить пароль</h3>
             </div>
 
             <form onSubmit={handleSubmit} className="form">
                 <div className="field">
                     <label className="field__label" htmlFor="current-password">
-                        Current password
+                        Текущий пароль
                     </label>
                     <input
                         id="current-password"
                         className="field__control"
                         type="password"
-                        placeholder="Current Password"
+                        placeholder="Введите текущий пароль"
                         value={currentPassword}
                         onChange={(e) => setCurrentPassword(e.target.value)}
                         autoComplete="current-password"
@@ -54,13 +54,13 @@ const ChangePasswordForm = () => {
 
                 <div className="field">
                     <label className="field__label" htmlFor="new-password">
-                        New password
+                        Новый пароль
                     </label>
                     <input
                         id="new-password"
                         className="field__control"
                         type="password"
-                        placeholder="New Password"
+                        placeholder="Введите новый пароль"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         autoComplete="new-password"
@@ -70,7 +70,7 @@ const ChangePasswordForm = () => {
 
                 <div className="form__actions">
                     <button type="submit" className="button button--primary">
-                        Update Password
+                        Обновить пароль
                     </button>
                 </div>
             </form>

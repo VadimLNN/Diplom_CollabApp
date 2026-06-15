@@ -26,7 +26,7 @@ const CreateProjectForm = ({ onSuccess, isOpen }) => {
             e.preventDefault();
 
             if (!name.trim()) {
-                toast.error("Project name is required");
+                toast.error("Укажите название проекта");
                 return;
             }
 
@@ -37,7 +37,7 @@ const CreateProjectForm = ({ onSuccess, isOpen }) => {
                     description: description.trim(),
                 });
 
-                toast.success("Project created successfully!");
+                toast.success("Проект успешно создан!");
                 onSuccess(response.data);
 
                 setName("");
@@ -46,7 +46,7 @@ const CreateProjectForm = ({ onSuccess, isOpen }) => {
                 const errorMessage =
                     err.response?.data?.errors?.[0]?.msg ||
                     err.response?.data?.error ||
-                    "Failed to create project";
+                    "Не удалось создать проект";
                 toast.error(errorMessage);
             } finally {
                 setIsLoading(false);
@@ -59,14 +59,14 @@ const CreateProjectForm = ({ onSuccess, isOpen }) => {
         <form onSubmit={handleSubmit} className="form">
             <div className="field">
                 <label className="field__label" htmlFor="project-name">
-                    Project name
+                    Название проекта
                 </label>
                 <input
                     id="project-name"
                     ref={nameInputRef}
                     className="field__control"
                     type="text"
-                    placeholder="Enter project name"
+                    placeholder="Введите название проекта"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     disabled={isLoading}
@@ -76,12 +76,12 @@ const CreateProjectForm = ({ onSuccess, isOpen }) => {
 
             <div className="field field--textarea">
                 <label className="field__label" htmlFor="project-description">
-                    Description
+                    Описание
                 </label>
                 <textarea
                     id="project-description"
                     className="field__control"
-                    placeholder="Description optional"
+                    placeholder="Описание (необязательно)"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     rows="4"
@@ -96,7 +96,7 @@ const CreateProjectForm = ({ onSuccess, isOpen }) => {
                     disabled={isLoading || !name.trim()}
                 >
                     <span className="button__label">
-                        {isLoading ? "Creating..." : "Create"}
+                        {isLoading ? "Создание..." : "Создать"}
                     </span>
                 </button>
             </div>

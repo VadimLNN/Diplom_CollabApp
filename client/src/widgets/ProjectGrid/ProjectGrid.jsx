@@ -6,15 +6,15 @@ const ProjectGrid = ({ projects, onCreateClick }) => {
         return (
             <EmptyState
                 icon="🗂️"
-                title="No Projects Yet"
-                message="It looks a bit empty here. Let's create your first project to get started!"
+                title="Проектов пока нет"
+                message="Создайте первый проект, чтобы начать работу."
             >
                 <button
                     type="button"
                     onClick={onCreateClick}
                     className="button button--primary"
                 >
-                    + Create Your First Project
+                    + Создать первый проект
                 </button>
             </EmptyState>
         );

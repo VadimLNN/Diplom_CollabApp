@@ -11,8 +11,8 @@ const TabGrid = ({
         return (
             <EmptyState
                 icon="🖥️"
-                title="No Tabs in This Project"
-                message="Collaborative tabs let you work together in real-time. Create one to get started!"
+                title="В проекте пока нет вкладок"
+                message="Создайте вкладку, чтобы начать совместную работу в реальном времени."
             >
                 {(userRole === "owner" || userRole === "editor") && (
                     <button
@@ -20,7 +20,7 @@ const TabGrid = ({
                         onClick={onCreateClick}
                         className="button button--primary"
                     >
-                        + Create a New Tab
+                        + Создать вкладку
                     </button>
                 )}
             </EmptyState>

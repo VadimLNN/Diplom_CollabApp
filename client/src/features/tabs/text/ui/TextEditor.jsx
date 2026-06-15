@@ -66,7 +66,7 @@ const TextEditorReady = ({
                 }),
 
                 Placeholder.configure({
-                    placeholder: "Start writing together...",
+                    placeholder: "Начните писать вместе...",
                 }),
 
                 BlockIdExtension,
@@ -178,7 +178,7 @@ const TextEditorReady = ({
 
         if (!copiedAnchor || copiedAnchor.anchorType !== "board-element") {
             alert(
-                "Сначала выдели элемент на доске и нажми Copy selected element link.",
+                "Сначала выделите элемент на доске и нажмите «Копировать ссылку на элемент».",
             );
             return;
         }
@@ -251,7 +251,7 @@ const TextEditorReady = ({
         const label =
             currentBlock.text?.trim().slice(0, 100) ||
             tab.title ||
-            "Text paragraph";
+            "Текстовый абзац";
 
         const anchor = {
             tabId: tab.id,
@@ -268,7 +268,7 @@ const TextEditorReady = ({
 
         saveTextBlockAnchor(anchor);
 
-        alert("Paragraph link copied.");
+        alert("Ссылка на абзац скопирована.");
     };
 
     const handleInsertTextBlockLink = () => {
@@ -279,7 +279,9 @@ const TextEditorReady = ({
         const copiedAnchor = getTextBlockAnchor();
 
         if (!copiedAnchor || copiedAnchor.anchorType !== "text-block") {
-            alert("Сначала скопируй абзац через Copy paragraph anchor.");
+            alert(
+                "Сначала скопируйте абзац через «Копировать ссылку на абзац».",
+            );
             return;
         }
 
@@ -343,7 +345,7 @@ const TextEditorReady = ({
     };
 
     if (!editor) {
-        return <div className="card">🔄 Initializing editor...</div>;
+        return <div className="card">🔄 Инициализация редактора...</div>;
     }
 
     return (
@@ -357,7 +359,7 @@ const TextEditorReady = ({
                     }`}
                 >
                     <span className="status-chip__dot" aria-hidden="true" />
-                    {connected ? "Connected" : "Disconnected"}
+                    {connected ? "Подключено" : "Нет подключения"}
                 </span>
 
                 {canEdit && (
@@ -375,7 +377,7 @@ const TextEditorReady = ({
                             onClick={handleInsertBoardElementLink}
                             disabled={!editor}
                         >
-                            Insert board element
+                            Вставить ссылку на элемент доски
                         </button>
 
                         <button
@@ -384,7 +386,7 @@ const TextEditorReady = ({
                             onClick={handleInsertTextBlockLink}
                             disabled={!editor}
                         >
-                            Insert paragraph link
+                            Вставить ссылку на абзац
                         </button>
 
                         <button
@@ -393,7 +395,7 @@ const TextEditorReady = ({
                             onClick={handleCopyCurrentParagraphLink}
                             disabled={!editor}
                         >
-                            Copy paragraph anchor
+                            Копировать ссылку на абзац
                         </button>
                     </div>
                 )}
@@ -416,11 +418,15 @@ const TextEditor = ({ tab, canEdit, projectTabs = [] }) => {
     const { provider, connected, synced, error } = useHocusProvider(tab);
 
     if (error) {
-        return <div className="card">⚠️ {error}. Try reconnecting.</div>;
+        return (
+            <div className="card">
+                ⚠️ {error}. Попробуйте подключиться повторно.
+            </div>
+        );
     }
 
     if (!provider || !synced) {
-        return <div className="card">🔄 Loading document state...</div>;
+        return <div className="card">🔄 Загрузка документа...</div>;
     }
 
     return (

@@ -4,6 +4,12 @@ import api from "../shared/api/axios";
 
 import EditorRenderer from "../features/tabs/EditorRenderer";
 
+const roleLabels = {
+    owner: "Владелец",
+    editor: "Редактор",
+    viewer: "Наблюдатель",
+};
+
 const DocumentEditorPage = () => {
     const { projectId, tabId } = useParams();
 
@@ -31,7 +37,7 @@ const DocumentEditorPage = () => {
                 setUserRole(roleResponse.data.role);
                 setProjectTabs(tabsResponse.data);
             } catch (err) {
-                setError("Failed to load editor");
+                setError("Не удалось загрузить редактор");
                 console.error(err);
             } finally {
                 setIsLoading(false);
@@ -46,7 +52,7 @@ const DocumentEditorPage = () => {
     if (isLoading) {
         return (
             <div className="page page--editor u-content-width">
-                🔄 Loading editor...
+                🔄 Загрузка редактора...
             </div>
         );
     }
@@ -54,13 +60,15 @@ const DocumentEditorPage = () => {
     if (error || !tab) {
         return (
             <div className="page page--editor u-content-width">
-                <p className="field__error">{error || "Tab not found"}</p>
+                <p className="field__error">
+                    {error || "Вкладка не найдена"}
+                </p>
 
                 <Link
                     to={`/projects/${projectId}`}
                     className="button button--secondary"
                 >
-                    ← Back to Project
+                    ← Вернуться к проекту
                 </Link>
             </div>
         );
@@ -68,9 +76,9 @@ const DocumentEditorPage = () => {
 
     return (
         <div className="page page--editor u-content-width">
-            <nav className="breadcrumbs" aria-label="Breadcrumbs">
+            <nav className="breadcrumbs" aria-label="Навигационная цепочка">
                 <Link to={`/projects/${projectId}`}>
-                    ← {tab.project_name || "Project"}
+                    ← {tab.project_name || "Проект"}
                 </Link>
             </nav>
 
@@ -79,7 +87,9 @@ const DocumentEditorPage = () => {
                     <h1>{tab.title}</h1>
 
                     {userRole && (
-                        <span className="status-chip">Role: {userRole}</span>
+                        <span className="status-chip">
+                            Роль: {roleLabels[userRole] || userRole}
+                        </span>
                     )}
                 </div>
             </header>

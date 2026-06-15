@@ -11,18 +11,19 @@ const DeleteAccountSection = () => {
     const handleDelete = async () => {
         if (
             window.confirm(
-                "Are you absolutely sure? This action cannot be undone.",
+                "Вы уверены? Это действие нельзя отменить.",
             )
         ) {
             try {
                 await api.delete("/auth/delete-account", {
                     data: { password },
                 });
-                toast.success("Your account has been deleted.");
+                toast.success("Ваш аккаунт удален.");
                 logout();
             } catch (error) {
                 toast.error(
-                    error.response?.data?.error || "Failed to delete account.",
+                    error.response?.data?.error ||
+                        "Не удалось удалить аккаунт.",
                 );
             }
         }
@@ -31,10 +32,9 @@ const DeleteAccountSection = () => {
     return (
         <Card className="card--danger">
             <div className="card__head">
-                <h3>Danger Zone</h3>
+                <h3>Опасная зона</h3>
                 <p className="card__subtitle">
-                    Once you delete your account, there is no going back. Please
-                    be certain.
+                    После удаления аккаунта восстановить его будет невозможно.
                 </p>
             </div>
 
@@ -44,13 +44,13 @@ const DeleteAccountSection = () => {
                         className="field__label"
                         htmlFor="delete-account-password"
                     >
-                        Confirm your password
+                        Подтвердите пароль
                     </label>
                     <input
                         id="delete-account-password"
                         className="field__control"
                         type="password"
-                        placeholder="Confirm your password"
+                        placeholder="Введите пароль для подтверждения"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         autoComplete="current-password"
@@ -64,7 +64,7 @@ const DeleteAccountSection = () => {
                         onClick={handleDelete}
                         className="button button--danger"
                     >
-                        Delete My Account
+                        Удалить мой аккаунт
                     </button>
                 </div>
             </div>
