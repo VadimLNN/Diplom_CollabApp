@@ -1,4 +1,5 @@
 import Collaboration from "@tiptap/extension-collaboration";
+import CollaborationCaret from "@tiptap/extension-collaboration-caret";
 import Image from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
 import TextAlign from "@tiptap/extension-text-align";
@@ -6,9 +7,11 @@ import Underline from "@tiptap/extension-underline";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 
+import { useAuth } from "../../../../app/providers/authContext";
+import { getCollaborationUser } from "../../../../shared/realtime/collaborationUser";
 import { useHocusProvider } from "../../../../shared/realtime/getHocusProvider";
 import EditorToolbar from "./EditorToolbar";
 
@@ -43,6 +46,11 @@ const TextEditorReady = ({
     projectTabs = [],
 }) => {
     const location = useLocation();
+    const { user } = useAuth();
+    const collaborationUser = useMemo(
+        () => getCollaborationUser(user),
+        [user],
+    );
 
     const editor = useEditor(
         {
@@ -76,6 +84,16 @@ const TextEditorReady = ({
                 Collaboration.configure({
                     document: provider.document,
                 }),
+
+                CollaborationCaret.configure({
+                    provider,
+                    user: collaborationUser,
+                    selectionRender: (remoteUser) => ({
+                        nodeName: "span",
+                        class: "collaboration-carets__selection",
+                        style: `background-color: ${remoteUser.color}38`,
+                    }),
+                }),
             ],
 
             editorProps: {
@@ -84,7 +102,7 @@ const TextEditorReady = ({
                 },
             },
         },
-        [provider],
+        [provider, collaborationUser],
     );
 
     useEffect(() => {

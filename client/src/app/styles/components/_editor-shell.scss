@@ -179,6 +179,41 @@
     pointer-events: none;
 }
 
+/* Collaboration carets */
+
+.editor-shell--text .collaboration-carets__caret {
+    position: relative;
+    z-index: 2;
+    margin-inline: -1px;
+    border-left: 2px solid;
+    border-right: 1px solid transparent;
+    pointer-events: none;
+    word-break: normal;
+}
+
+.editor-shell--text .collaboration-carets__label {
+    position: absolute;
+    top: -1.65em;
+    left: -2px;
+    max-width: 180px;
+    overflow: hidden;
+    padding: 2px 7px;
+    border-radius: 6px 6px 6px 0;
+    box-shadow: var(--shadow-1);
+    color: #080a10;
+    font-size: var(--text-2xs);
+    font-style: normal;
+    font-weight: 700;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.editor-shell--text .collaboration-carets__selection {
+    border-radius: 2px;
+}
+
 /* Toolbar */
 
 .editor-toolbar__group {

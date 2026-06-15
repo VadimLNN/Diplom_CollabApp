@@ -3,11 +3,13 @@ import "@excalidraw/excalidraw/index.css";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../../../app/providers/authContext";
 import { saveBoardElementAnchor } from "../../../shared/links/boardElementClipboard";
 import {
     clearTextBlockAnchor,
     getTextBlockAnchor,
 } from "../../../shared/links/textBlockClipboard";
+import { getCollaborationUser } from "../../../shared/realtime/collaborationUser";
 import { useHocusProvider } from "../../../shared/realtime/getHocusProvider";
 import { useBoardAwareness } from "./useBoardAwareness";
 import { useBoardCollaboration } from "./useBoardCollaboration";
@@ -23,6 +25,11 @@ const BoardEditor = ({ tab, canEdit }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const { projectId } = useParams();
+    const { user } = useAuth();
+    const collaborationUser = useMemo(
+        () => getCollaborationUser(user),
+        [user],
+    );
 
     const [selectedElementIds, setSelectedElementIds] = useState({});
     const [copiedElementNotice, setCopiedElementNotice] = useState("");
@@ -43,23 +50,10 @@ const BoardEditor = ({ tab, canEdit }) => {
         onSelectionChange: setSelectedElementIds,
     });
 
-    const username = (() => {
-        try {
-            const token = localStorage.getItem("token");
-            if (token) {
-                const payload = JSON.parse(atob(token.split(".")[1]));
-                return payload?.username || payload?.sub || null;
-            }
-        } catch {
-            return null;
-        }
-        return null;
-    })();
-
     const { handlePointerUpdate: onPointerUpdate } = useBoardAwareness(
         provider,
         excalidrawAPIRef,
-        username,
+        collaborationUser,
         apiReady,
     );
 
