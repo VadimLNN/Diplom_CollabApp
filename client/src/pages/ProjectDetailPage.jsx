@@ -1,13 +1,32 @@
-import { useCallback, useEffect, useState } from "react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import ProjectMembers from "../features/projects/manage-members/ProjectMembers";
 import ProjectSettings from "../features/projects/settings/ProjectSettings";
 import CreateTabForm from "../features/tabs/create_tab/CreateTabForm";
+import EditTabForm from "../features/tabs/edit_tab/EditTabForm";
 import api from "../shared/api/axios";
 import Modal from "../shared/ui/Modal/Modal";
 import TabGrid from "../widgets/TabGrid/TabGrid";
 
 import pageStyles from "./PageStyles.module.css";
+
+const SORT_OPTIONS = [
+    { value: "updated-desc", label: "Недавно обновленные" },
+    { value: "created-desc", label: "Сначала новые" },
+    { value: "created-asc", label: "Сначала старые" },
+    { value: "title-asc", label: "По названию А–Я" },
+    { value: "title-desc", label: "По названию Я–А" },
+];
+
+const TAB_SORT_STORAGE_KEY = "collab-app:tab-sort";
+const DEFAULT_TAB_SORT = "updated-desc";
+const VALID_TAB_SORTS = new Set(SORT_OPTIONS.map((option) => option.value));
+
+const getInitialTabSort = () => {
+    const savedSort = localStorage.getItem(TAB_SORT_STORAGE_KEY);
+    return VALID_TAB_SORTS.has(savedSort) ? savedSort : DEFAULT_TAB_SORT;
+};
 
 const ProjectDetailPage = () => {
     const { projectId } = useParams();
@@ -19,6 +38,46 @@ const ProjectDetailPage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
     const [isCreateTabModalOpen, setIsCreateTabModalOpen] = useState(false);
+    const [editingTab, setEditingTab] = useState(null);
+    const [sortBy, setSortBy] = useState(getInitialTabSort);
+    const selectedSortLabel =
+        SORT_OPTIONS.find((option) => option.value === sortBy)?.label ||
+        SORT_OPTIONS[0].label;
+
+    const sortedTabs = useMemo(() => {
+        const nextTabs = [...tabs];
+
+        nextTabs.sort((firstTab, secondTab) => {
+            switch (sortBy) {
+                case "created-asc":
+                    return (
+                        new Date(firstTab.created_at) -
+                        new Date(secondTab.created_at)
+                    );
+                case "updated-desc":
+                    return (
+                        new Date(secondTab.updated_at) -
+                        new Date(firstTab.updated_at)
+                    );
+                case "title-asc":
+                    return firstTab.title.localeCompare(secondTab.title, "ru", {
+                        sensitivity: "base",
+                    });
+                case "title-desc":
+                    return secondTab.title.localeCompare(firstTab.title, "ru", {
+                        sensitivity: "base",
+                    });
+                case "created-desc":
+                default:
+                    return (
+                        new Date(secondTab.created_at) -
+                        new Date(firstTab.created_at)
+                    );
+            }
+        });
+
+        return nextTabs;
+    }, [sortBy, tabs]);
 
     const fetchData = useCallback(async () => {
         try {
@@ -56,6 +115,10 @@ const ProjectDetailPage = () => {
         fetchData();
     }, [fetchData]);
 
+    useEffect(() => {
+        localStorage.setItem(TAB_SORT_STORAGE_KEY, sortBy);
+    }, [sortBy]);
+
     const handleTabCreated = (newTab) => {
         setTabs((prev) => [newTab, ...prev]);
         setIsCreateTabModalOpen(false);
@@ -70,6 +133,17 @@ const ProjectDetailPage = () => {
                 alert("Не удалось удалить вкладку");
             }
         }
+    };
+
+    const handleTabUpdated = (updatedTab) => {
+        setTabs((previousTabs) =>
+            previousTabs.map((tab) =>
+                tab.id === updatedTab.id
+                    ? { ...updatedTab, project_id: projectId }
+                    : tab,
+            ),
+        );
+        setEditingTab(null);
     };
 
     if (isLoading)
@@ -150,7 +224,64 @@ const ProjectDetailPage = () => {
                                 <h3>Совместное рабочее пространство</h3>
                             </div>
 
-                            <div className="page-header__actions">
+                            <div className="tab-toolbar">
+                                <DropdownMenu.Root>
+                                    <DropdownMenu.Trigger asChild>
+                                        <button
+                                            type="button"
+                                            className="tab-sort__trigger"
+                                            aria-label={`Сортировка вкладок: ${selectedSortLabel}`}
+                                        >
+                                            <span
+                                                className="tab-sort__icon"
+                                                aria-hidden="true"
+                                            >
+                                                ↕
+                                            </span>
+                                            <span>{selectedSortLabel}</span>
+                                            <span
+                                                className="tab-sort__chevron"
+                                                aria-hidden="true"
+                                            >
+                                                ▾
+                                            </span>
+                                        </button>
+                                    </DropdownMenu.Trigger>
+
+                                    <DropdownMenu.Portal>
+                                        <DropdownMenu.Content
+                                            className="tab-sort__menu"
+                                            side="bottom"
+                                            align="start"
+                                            sideOffset={8}
+                                            collisionPadding={12}
+                                        >
+                                            <DropdownMenu.Label className="tab-sort__menu-label">
+                                                Сортировать вкладки
+                                            </DropdownMenu.Label>
+                                            <DropdownMenu.RadioGroup
+                                                value={sortBy}
+                                                onValueChange={setSortBy}
+                                            >
+                                                {SORT_OPTIONS.map((option) => (
+                                                    <DropdownMenu.RadioItem
+                                                        key={option.value}
+                                                        value={option.value}
+                                                        className="tab-sort__menu-item"
+                                                    >
+                                                        <DropdownMenu.ItemIndicator className="tab-sort__indicator">
+                                                            ✓
+                                                        </DropdownMenu.ItemIndicator>
+                                                        <span>
+                                                            {option.label}
+                                                        </span>
+                                                    </DropdownMenu.RadioItem>
+                                                ))}
+                                            </DropdownMenu.RadioGroup>
+                                        </DropdownMenu.Content>
+                                    </DropdownMenu.Portal>
+                                </DropdownMenu.Root>
+
                                 {(userRole === "owner" ||
                                     userRole === "editor") && (
                                     <button
@@ -158,19 +289,21 @@ const ProjectDetailPage = () => {
                                         onClick={() =>
                                             setIsCreateTabModalOpen(true)
                                         }
-                                        className="button button--primary"
+                                        className="button button--primary tab-toolbar__create"
                                     >
-                                        + Новая вкладка
+                                        <span aria-hidden="true">+</span>
+                                        Новая вкладка
                                     </button>
                                 )}
                             </div>
                         </div>
 
                         <TabGrid
-                            tabs={tabs}
+                            tabs={sortedTabs}
                             onCreateClick={() => setIsCreateTabModalOpen(true)}
                             userRole={userRole}
                             onDeleteTab={handleDeleteTab}
+                            onEditTab={setEditingTab}
                         />
                     </>
                 )}
@@ -191,7 +324,22 @@ const ProjectDetailPage = () => {
                 <CreateTabForm
                     projectId={projectId}
                     onSuccess={handleTabCreated}
+                    isOpen={isCreateTabModalOpen}
                 />
+            </Modal>
+
+            <Modal
+                isOpen={Boolean(editingTab)}
+                onClose={() => setEditingTab(null)}
+                title="Изменить вкладку"
+            >
+                {editingTab && (
+                    <EditTabForm
+                        key={editingTab.id}
+                        tab={editingTab}
+                        onSuccess={handleTabUpdated}
+                    />
+                )}
             </Modal>
         </div>
     );

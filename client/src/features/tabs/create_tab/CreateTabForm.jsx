@@ -4,6 +4,7 @@ import api from "../../../shared/api/axios";
 
 const CreateTabForm = ({ projectId, onSuccess, isOpen }) => {
     const [title, setTitle] = useState("");
+    const [description, setDescription] = useState("");
     const [tabType, setTabType] = useState("text");
     const titleInputRef = useRef(null);
 
@@ -15,6 +16,7 @@ const CreateTabForm = ({ projectId, onSuccess, isOpen }) => {
         }
         if (!isOpen) {
             setTitle("");
+            setDescription("");
             setTabType("text");
         }
     }, [isOpen]);
@@ -33,6 +35,7 @@ const CreateTabForm = ({ projectId, onSuccess, isOpen }) => {
         try {
             const response = await api.post(`/projects/${projectId}/tabs`, {
                 title: normalizedTitle,
+                description: description.trim(),
                 type: tabType,
             });
             toast.success(`Вкладка «${normalizedTitle}» создана!`);
@@ -62,6 +65,21 @@ const CreateTabForm = ({ projectId, onSuccess, isOpen }) => {
                     onChange={(e) => setTitle(e.target.value)}
                     onBlur={() => setTitle((value) => value.trim())}
                     required
+                />
+            </div>
+
+            <div className="field field--textarea">
+                <label className="field__label" htmlFor="tab-description">
+                    Описание
+                </label>
+                <textarea
+                    id="tab-description"
+                    className="field__control"
+                    placeholder="Кратко опишите назначение вкладки"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    maxLength={500}
+                    rows="3"
                 />
             </div>
 

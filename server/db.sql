@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS tabs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     title VARCHAR(100) NOT NULL,
+    description TEXT,
     type TEXT NOT NULL CHECK (type IN ('text', 'board')),
     
     ydoc_document_name VARCHAR(255) NOT NULL UNIQUE,
