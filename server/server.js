@@ -1,9 +1,11 @@
 const { server } = require("./app");
 const env = require("./config/env");
+const logger = require("./utils/logger");
 
 server.listen(env.port, () => {
-    console.log(`Server started on http://localhost:${env.port}`);
-    console.log(
-        `Swagger docs available at http://localhost:${env.port}/api-docs`,
+    logger.info({ port: env.port }, "REST API started");
+    logger.info(
+        { url: `http://localhost:${env.port}/api-docs` },
+        "Swagger UI available",
     );
 });

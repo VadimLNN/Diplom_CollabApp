@@ -1,12 +1,13 @@
 const jwt = require("jsonwebtoken");
 const pool = require("../db");
+const env = require("../config/env");
 
 function verifyToken(token) {
     if (!token) {
         throw new Error("Missing realtime auth token");
     }
 
-    return jwt.verify(token, process.env.JWT_SECRET);
+    return jwt.verify(token, env.jwtSecret);
 }
 
 async function getUserRoleForDocument(documentName, userId) {

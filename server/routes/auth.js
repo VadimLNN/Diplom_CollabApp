@@ -1,7 +1,7 @@
 const { body, validationResult } = require("express-validator");
 const express = require("express");
 const router = express.Router();
-const authMiddleware = require("../middleware/authMiddleware"); // <-- Импортируем middleware
+const authMiddleware = require("../middleware/authMiddleware");
 const authService = require("../services/authService");
 const env = require("../config/env");
 
@@ -17,7 +17,6 @@ router.post(
     async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            // Если есть ошибки, возвращаем 400 и список ошибок
             return res.status(400).json({ errors: errors.array() });
         }
         try {
@@ -75,7 +74,7 @@ router.get("/user", authMiddleware, async (req, res) => {
 
 router.put(
     "/change-password",
-    authMiddleware, // Пользователь должен быть авторизован
+    authMiddleware,
     body("currentPassword")
         .notEmpty()
         .withMessage("Current password is required"),
@@ -92,7 +91,6 @@ router.put(
             const userId = req.user.id;
             const { currentPassword, newPassword } = req.body;
 
-            // Вызываем новый метод сервиса для смены пароля
             await authService.changePassword(
                 userId,
                 currentPassword,
@@ -108,7 +106,7 @@ router.put(
 
 router.delete(
     "/delete-account",
-    authMiddleware, // Пользователь должен быть авторизован
+    authMiddleware,
     body("password")
         .notEmpty()
         .withMessage("Password is required for confirmation"),
@@ -122,7 +120,6 @@ router.delete(
             const userId = req.user.id;
             const { password } = req.body;
 
-            // Вызываем новый метод сервиса для удаления
             await authService.deleteAccount(userId, password);
 
             res.status(200).json({ message: "Account deleted successfully." });

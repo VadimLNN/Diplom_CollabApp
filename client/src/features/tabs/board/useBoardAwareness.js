@@ -61,7 +61,6 @@ export function useBoardAwareness(provider, excalidrawAPIRef, username, apiReady
         };
 
         awareness.on("change", updateCollaborators);
-        // Запускаем сразу, чтобы локальный юзер зарегистрировался
         updateCollaborators();
 
         return () => {

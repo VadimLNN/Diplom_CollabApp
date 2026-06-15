@@ -29,17 +29,14 @@ export function useHocusProvider(tab) {
         });
 
         const handleStatus = ({ status }) => {
-            console.log("[Hocuspocus] status:", tab.ydoc_document_name, status);
             setConnected(status === "connected");
         };
 
         const handleSynced = () => {
-            console.log("[Hocuspocus] synced:", tab.ydoc_document_name);
             setSynced(true);
         };
 
-        const handleClose = (event) => {
-            console.warn("[Hocuspocus] close:", tab.ydoc_document_name, event);
+        const handleClose = () => {
             setConnected(false);
         };
 

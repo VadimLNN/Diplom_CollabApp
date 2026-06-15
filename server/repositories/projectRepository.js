@@ -50,5 +50,4 @@ class ProjectRepository {
     }
 }
 
-// Экспортируем один экземпляр класса, чтобы не создавать его каждый раз (Singleton)
 module.exports = new ProjectRepository();

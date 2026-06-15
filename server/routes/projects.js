@@ -10,6 +10,7 @@ const projectService = require("../services/projectService");
 const tabService = require("../services/tabService");
 
 const asyncHandler = require("../utils/asyncHandler");
+const logger = require("../utils/logger");
 
 const validate = require("../middleware/validate");
 const { validateProjectId } = require("../validators/commonValidators");
@@ -17,7 +18,6 @@ const { createTabValidator } = require("../validators/tabValidators");
 
 router.use(authMiddleware);
 
-// CREATE
 router.post(
     "/",
     [
@@ -48,7 +48,6 @@ router.post(
     },
 );
 
-// READ (ALL)
 router.get(
     "/",
     asyncHandler(async (req, res) => {
@@ -59,7 +58,6 @@ router.get(
     }),
 );
 
-// READ (ONE)
 router.get(
     "/:id",
     checkProjectAccess,
@@ -74,7 +72,6 @@ router.get(
     }),
 );
 
-// UPDATE
 router.put(
     "/:id",
     [checkProjectAccess, hasRole(["owner"])],
@@ -109,7 +106,6 @@ router.put(
     },
 );
 
-// DELETE - Удаление проекта
 router.delete(
     "/:id",
     [checkProjectAccess, hasRole(["owner"])],
@@ -118,7 +114,10 @@ router.delete(
             await projectService.deleteProject(req.params.id);
             res.status(200).json({ message: "Project deleted successfully" });
         } catch (error) {
-            console.error(error);
+            logger.error(
+                { err: error, projectId: req.params.id },
+                "Failed to delete project",
+            );
             res.status(500).json({ error: "Failed to delete project" });
         }
     },

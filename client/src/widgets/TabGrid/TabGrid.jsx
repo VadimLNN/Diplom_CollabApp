@@ -5,7 +5,6 @@ const TabGrid = ({
     tabs,
     userRole,
     onDeleteTab,
-    onTabClick,
     onCreateClick,
 }) => {
     if (!tabs || tabs.length === 0) {
@@ -34,7 +33,6 @@ const TabGrid = ({
                 <TabCard
                     key={tab.id}
                     tab={tab}
-                    onClick={() => onTabClick(tab.id)}
                     onDelete={
                         userRole === "owner" ? () => onDeleteTab(tab.id) : null
                     }

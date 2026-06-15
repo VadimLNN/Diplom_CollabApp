@@ -1,4 +1,3 @@
-// src/pages/ProjectsDashboardPage.jsx
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import CreateProjectForm from "../features/projects/create/CreateProjectForm";

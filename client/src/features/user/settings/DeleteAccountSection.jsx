@@ -1,6 +1,6 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { useAuth } from "../../../app/providers/AuthProvider";
+import { useAuth } from "../../../app/providers/authContext";
 import api from "../../../shared/api/axios";
 import Card from "../../../shared/ui/Card/Card";
 
@@ -17,9 +17,9 @@ const DeleteAccountSection = () => {
             try {
                 await api.delete("/auth/delete-account", {
                     data: { password },
-                }); // ВАЖНО: `data` для DELETE запросов
+                });
                 toast.success("Your account has been deleted.");
-                logout(); // Выходим из системы
+                logout();
             } catch (error) {
                 toast.error(
                     error.response?.data?.error || "Failed to delete account.",

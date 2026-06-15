@@ -22,16 +22,13 @@ module.exports = {
     jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "30d",
     refreshCookieName: process.env.REFRESH_COOKIE_NAME || "refreshToken",
 
-    clientUrl: process.env.CLIENT_URL || "http://localhost:3000",
+    clientUrl: process.env.CLIENT_URL || "http://localhost:5173",
 
     databaseUrl: process.env.DATABASE_URL,
     db: {
         user: process.env.DB_USER,
         host: process.env.DB_HOST,
-        database:
-            process.env.NODE_ENV === "test"
-                ? process.env.DB_TEST_DATABASE
-                : process.env.DB_DATABASE,
+        database: process.env.DB_DATABASE,
         password: process.env.DB_PASSWORD,
         port: Number(process.env.DB_PORT || 5432),
     },

@@ -24,12 +24,15 @@ const RegisterForm = () => {
             api.post("/auth/register", { username, email, password }),
             {
                 loading: "Registering...",
-                success: (response) => {
+                success: () => {
                     setTimeout(() => navigate("/login"), 1500);
                     return <b>Registration successful! Redirecting...</b>;
                 },
-                error: (err) => (
-                    <b>{err.response?.data?.error || "Registration failed"}</b>
+                error: (error) => (
+                    <b>
+                        {error.response?.data?.error ||
+                            "Registration failed"}
+                    </b>
                 ),
             },
         );
