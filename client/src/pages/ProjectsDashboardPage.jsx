@@ -56,7 +56,21 @@ const ProjectsDashboardPage = () => {
     return (
         <div className="page u-content-width">
             <header className="page-header">
-                <h1>Мои проекты</h1>
+                <div className="page-header__content">
+                    <h1>Мои проекты</h1>
+                </div>
+
+                {projects.length > 0 && (
+                    <div className="page-header__actions">
+                        <button
+                            type="button"
+                            onClick={handleOpenCreateModal}
+                            className="button button--primary"
+                        >
+                            + Создать проект
+                        </button>
+                    </div>
+                )}
             </header>
 
             {error && <p style={{ color: "red" }}>{error}</p>}
