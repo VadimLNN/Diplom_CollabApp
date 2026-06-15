@@ -3,7 +3,7 @@ import TextEditor from "./text/ui/TextEditor";
 
 const EditorRenderer = ({ tab, userRole, projectTabs = [] }) => {
     if (!tab) {
-        return <div className="card">Select a tab to start working.</div>;
+        return <div className="card">Выберите вкладку, чтобы начать работу.</div>;
     }
 
     const canEdit = userRole === "owner" || userRole === "editor";
@@ -31,7 +31,7 @@ const EditorRenderer = ({ tab, userRole, projectTabs = [] }) => {
             default:
                 return (
                     <div className="card">
-                        Unknown tab type: <strong>{tab.type}</strong>
+                        Неизвестный тип вкладки: <strong>{tab.type}</strong>
                     </div>
                 );
         }
@@ -41,8 +41,8 @@ const EditorRenderer = ({ tab, userRole, projectTabs = [] }) => {
         <>
             {isViewer && (
                 <div className="card editor-readonly-banner">
-                    👁️ View-only mode. You can view this project, but cannot
-                    edit it.
+                    👁️ Режим просмотра. Вы можете просматривать проект, но не
+                    можете его редактировать.
                 </div>
             )}
 

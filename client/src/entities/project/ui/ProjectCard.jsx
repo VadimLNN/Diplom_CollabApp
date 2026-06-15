@@ -15,12 +15,13 @@ const ProjectCard = ({ project }) => {
             </div>
 
             <p className="project-card__text">
-                {project.description || "No description provided."}
+                {project.description || "Описание не указано."}
             </p>
 
             <div className="card__footer">
                 <span className="project-card__meta">
-                    Created: {new Date(project.created_at).toLocaleDateString()}
+                    Создан:{" "}
+                    {new Date(project.created_at).toLocaleDateString("ru-RU")}
                 </span>
 
                 <button
@@ -28,7 +29,7 @@ const ProjectCard = ({ project }) => {
                     onClick={handleOpenProject}
                     className="button button--secondary"
                 >
-                    Open
+                    Открыть
                 </button>
             </div>
         </Card>

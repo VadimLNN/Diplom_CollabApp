@@ -2,6 +2,14 @@ import { Link } from "react-router-dom";
 import Card from "../../shared/ui/Card/Card";
 
 const TabCard = ({ tab, isActive, onDelete }) => {
+    const getTypeLabel = (type) => {
+        const labels = {
+            text: "Текст",
+            board: "Доска",
+        };
+        return labels[type] || type;
+    };
+
     const getIcon = (type) => {
         const icons = {
             text: "📄",
@@ -27,21 +35,24 @@ const TabCard = ({ tab, isActive, onDelete }) => {
 
                 <div>
                     <h3 className="tab-card__title">{tab.title}</h3>
-                    <span className="badge badge--neutral">{tab.type}</span>
+                    <span className="badge badge--neutral">
+                        {getTypeLabel(tab.type)}
+                    </span>
                 </div>
             </div>
 
             <p className="tab-card__description">
                 {tab.type === "text"
-                    ? "Collaborative text editor"
+                    ? "Совместный текстовый редактор"
                     : tab.type === "board"
-                      ? "Drawing canvas"
+                      ? "Доска для рисования"
                       : tab.type === "code"}
             </p>
 
             <div className="card__footer">
                 <span className="tab-card__meta">
-                    Updated: {new Date(tab.created_at).toLocaleDateString()}
+                    Обновлено:{" "}
+                    {new Date(tab.created_at).toLocaleDateString("ru-RU")}
                 </span>
 
                 <div className="tab-card__actions">
@@ -51,7 +62,7 @@ const TabCard = ({ tab, isActive, onDelete }) => {
                             onClick={handleDeleteTab}
                             className="button button--ghost"
                         >
-                            Delete
+                            Удалить
                         </button>
                     )}
 
@@ -59,7 +70,7 @@ const TabCard = ({ tab, isActive, onDelete }) => {
                         to={`/projects/${tab.project_id}/tabs/${tab.id}`}
                         className="button button--secondary"
                     >
-                        {isActive ? "Editing..." : "Open"}
+                        {isActive ? "Редактирование..." : "Открыть"}
                     </Link>
                 </div>
             </div>

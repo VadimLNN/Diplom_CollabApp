@@ -106,10 +106,10 @@ const EditorToolbar = ({ editor }) => {
         <Tooltip.Provider>
             <Toolbar.Root
                 className="editor-toolbar"
-                aria-label="Editor toolbar"
+                aria-label="Панель редактора"
             >
                 <ToolbarButton
-                    label="Undo"
+                    label="Отменить"
                     disabled={!editor.can().undo()}
                     onClick={() => run((chain) => chain.undo())}
                 >
@@ -117,7 +117,7 @@ const EditorToolbar = ({ editor }) => {
                 </ToolbarButton>
 
                 <ToolbarButton
-                    label="Redo"
+                    label="Повторить"
                     disabled={!editor.can().redo()}
                     onClick={() => run((chain) => chain.redo())}
                 >
@@ -127,7 +127,7 @@ const EditorToolbar = ({ editor }) => {
                 <Separator />
 
                 <ToolbarDropdown
-                    label="Heading"
+                    label="Заголовок"
                     trigger={
                         <>
                             <Icon>H</Icon>
@@ -141,7 +141,7 @@ const EditorToolbar = ({ editor }) => {
                             run((chain) => chain.setHeading({ level: 1 }))
                         }
                     >
-                        Heading 1
+                        Заголовок 1
                     </DropdownItem>
 
                     <DropdownItem
@@ -150,7 +150,7 @@ const EditorToolbar = ({ editor }) => {
                             run((chain) => chain.setHeading({ level: 2 }))
                         }
                     >
-                        Heading 2
+                        Заголовок 2
                     </DropdownItem>
 
                     <DropdownItem
@@ -159,19 +159,19 @@ const EditorToolbar = ({ editor }) => {
                             run((chain) => chain.setHeading({ level: 3 }))
                         }
                     >
-                        Heading 3
+                        Заголовок 3
                     </DropdownItem>
 
                     <DropdownItem
                         active={editor.isActive("paragraph")}
                         onSelect={() => run((chain) => chain.setParagraph())}
                     >
-                        Paragraph
+                        Абзац
                     </DropdownItem>
                 </ToolbarDropdown>
 
                 <ToolbarDropdown
-                    label="List options"
+                    label="Варианты списка"
                     trigger={
                         <>
                             <Icon>≡</Icon>
@@ -185,7 +185,7 @@ const EditorToolbar = ({ editor }) => {
                             run((chain) => chain.toggleBulletList())
                         }
                     >
-                        Bullet list
+                        Маркированный список
                     </DropdownItem>
 
                     <DropdownItem
@@ -194,14 +194,14 @@ const EditorToolbar = ({ editor }) => {
                             run((chain) => chain.toggleOrderedList())
                         }
                     >
-                        Ordered list
+                        Нумерованный список
                     </DropdownItem>
                 </ToolbarDropdown>
 
                 <Separator />
 
                 <ToolbarButton
-                    label="Blockquote"
+                    label="Цитата"
                     pressed={editor.isActive("blockquote")}
                     disabled={!editor.can().toggleBlockquote()}
                     onClick={() => run((chain) => chain.toggleBlockquote())}
@@ -210,7 +210,7 @@ const EditorToolbar = ({ editor }) => {
                 </ToolbarButton>
 
                 <ToolbarButton
-                    label="Code Block"
+                    label="Блок кода"
                     pressed={editor.isActive("codeBlock")}
                     disabled={!editor.can().toggleCodeBlock()}
                     onClick={() => run((chain) => chain.toggleCodeBlock())}
@@ -223,7 +223,7 @@ const EditorToolbar = ({ editor }) => {
                 <Toolbar.ToggleGroup
                     className="editor-toolbar__group"
                     type="multiple"
-                    aria-label="Text formatting"
+                    aria-label="Форматирование текста"
                 >
                     <Toolbar.ToggleItem
                         className={`editor-toolbar__button ${
@@ -232,7 +232,7 @@ const EditorToolbar = ({ editor }) => {
                                 : ""
                         }`}
                         value="bold"
-                        aria-label="Bold"
+                        aria-label="Полужирный"
                         disabled={!editor.can().toggleBold()}
                         onClick={() => run((chain) => chain.toggleBold())}
                     >
@@ -246,7 +246,7 @@ const EditorToolbar = ({ editor }) => {
                                 : ""
                         }`}
                         value="italic"
-                        aria-label="Italic"
+                        aria-label="Курсив"
                         disabled={!editor.can().toggleItalic()}
                         onClick={() => run((chain) => chain.toggleItalic())}
                     >
@@ -260,7 +260,7 @@ const EditorToolbar = ({ editor }) => {
                                 : ""
                         }`}
                         value="strike"
-                        aria-label="Strike"
+                        aria-label="Зачеркнутый"
                         disabled={!editor.can().toggleStrike()}
                         onClick={() => run((chain) => chain.toggleStrike())}
                     >
@@ -274,7 +274,7 @@ const EditorToolbar = ({ editor }) => {
                                 : ""
                         }`}
                         value="code"
-                        aria-label="Code"
+                        aria-label="Код"
                         disabled={!editor.can().toggleCode()}
                         onClick={() => run((chain) => chain.toggleCode())}
                     >
@@ -288,7 +288,7 @@ const EditorToolbar = ({ editor }) => {
                                 : ""
                         }`}
                         value="underline"
-                        aria-label="Underline"
+                        aria-label="Подчеркнутый"
                         disabled={!(editor.can().toggleUnderline?.() ?? false)}
                         onClick={() => {
                             editor.chain().focus().toggleUnderline?.().run();
@@ -303,7 +303,7 @@ const EditorToolbar = ({ editor }) => {
                 <Toolbar.ToggleGroup
                     className="editor-toolbar__group"
                     type="single"
-                    aria-label="Text alignment"
+                    aria-label="Выравнивание текста"
                 >
                     <Toolbar.ToggleItem
                         className={`editor-toolbar__button ${
@@ -312,7 +312,7 @@ const EditorToolbar = ({ editor }) => {
                                 : ""
                         }`}
                         value="left"
-                        aria-label="Align left"
+                        aria-label="По левому краю"
                         onClick={() =>
                             editor.chain().focus().setTextAlign?.("left").run()
                         }
@@ -327,7 +327,7 @@ const EditorToolbar = ({ editor }) => {
                                 : ""
                         }`}
                         value="center"
-                        aria-label="Align center"
+                        aria-label="По центру"
                         onClick={() =>
                             editor
                                 .chain()
@@ -346,7 +346,7 @@ const EditorToolbar = ({ editor }) => {
                                 : ""
                         }`}
                         value="right"
-                        aria-label="Align right"
+                        aria-label="По правому краю"
                         onClick={() =>
                             editor.chain().focus().setTextAlign?.("right").run()
                         }
@@ -361,7 +361,7 @@ const EditorToolbar = ({ editor }) => {
                                 : ""
                         }`}
                         value="justify"
-                        aria-label="Align justify"
+                        aria-label="По ширине"
                         onClick={() =>
                             editor
                                 .chain()
@@ -377,9 +377,9 @@ const EditorToolbar = ({ editor }) => {
                 <Separator />
 
                 <ToolbarButton
-                    label="Add image"
+                    label="Добавить изображение"
                     onClick={() => {
-                        const url = window.prompt("Image URL");
+                        const url = window.prompt("URL изображения");
 
                         if (!url) return;
 
@@ -387,7 +387,7 @@ const EditorToolbar = ({ editor }) => {
                     }}
                 >
                     <Icon>🖼</Icon>
-                    <span className="editor-toolbar__text">Add</span>
+                    <span className="editor-toolbar__text">Добавить</span>
                 </ToolbarButton>
             </Toolbar.Root>
         </Tooltip.Provider>

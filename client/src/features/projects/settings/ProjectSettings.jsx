@@ -14,12 +14,12 @@ const ProjectSettings = ({ project }) => {
         await toast.promise(
             api.put(`/projects/${project.id}`, { name, description }),
             {
-                loading: "Saving changes...",
-                success: <b>Project updated successfully!</b>,
+                loading: "Сохранение изменений...",
+                success: <b>Проект успешно обновлен!</b>,
                 error: (err) => (
                     <b>
                         {err.response?.data?.error ||
-                            "Failed to update project."}
+                            "Не удалось обновить проект."}
                     </b>
                 ),
             },
@@ -31,14 +31,14 @@ const ProjectSettings = ({ project }) => {
             (t) => (
                 <div className="toast-container">
                     <span>
-                        Delete <b>"{project.name}"</b>?
+                        Удалить проект <b>«{project.name}»</b>?
                     </span>
                     <div style={{ display: "flex", gap: "8px" }}>
                         <button
                             className="toast-button toast-button-cancel"
                             onClick={() => toast.dismiss(t.id)}
                         >
-                            Cancel
+                            Отмена
                         </button>
                         <button
                             className="toast-button toast-button-confirm"
@@ -47,24 +47,24 @@ const ProjectSettings = ({ project }) => {
                                 toast.promise(
                                     api.delete(`/projects/${project.id}`),
                                     {
-                                        loading: `Deleting project...`,
+                                        loading: "Удаление проекта...",
                                         success: () => {
                                             navigate("/projects");
                                             return (
-                                                <b>Project has been deleted.</b>
+                                                <b>Проект удален.</b>
                                             );
                                         },
                                         error: (err) => (
                                             <b>
                                                 {err.response?.data?.error ||
-                                                    "Failed to delete project."}
+                                                    "Не удалось удалить проект."}
                                             </b>
                                         ),
                                     },
                                 );
                             }}
                         >
-                            Delete
+                            Удалить
                         </button>
                     </div>
                 </div>
@@ -80,7 +80,7 @@ const ProjectSettings = ({ project }) => {
         <div className="stack">
             <Card>
                 <div className="card__head">
-                    <h3>General Settings</h3>
+                    <h3>Основные настройки</h3>
                 </div>
 
                 <form onSubmit={handleUpdate} className="form">
@@ -89,7 +89,7 @@ const ProjectSettings = ({ project }) => {
                             className="field__label"
                             htmlFor="project-settings-name"
                         >
-                            Project name
+                            Название проекта
                         </label>
                         <input
                             id="project-settings-name"
@@ -105,7 +105,7 @@ const ProjectSettings = ({ project }) => {
                             className="field__label"
                             htmlFor="project-settings-description"
                         >
-                            Description
+                            Описание
                         </label>
                         <textarea
                             id="project-settings-description"
@@ -121,7 +121,7 @@ const ProjectSettings = ({ project }) => {
                             type="submit"
                             className="button button--primary"
                         >
-                            Save Changes
+                            Сохранить изменения
                         </button>
                     </div>
                 </form>
@@ -129,16 +129,16 @@ const ProjectSettings = ({ project }) => {
 
             <Card className="card--danger">
                 <div className="card__head">
-                    <h3>Danger Zone</h3>
+                    <h3>Опасная зона</h3>
                     <p className="card__subtitle">
-                        Deleting a project will permanently remove all its
-                        documents and members.
+                        При удалении проекта все его документы и участники
+                        будут удалены безвозвратно.
                     </p>
                 </div>
 
                 <div className="card__footer">
                     <span className="u-text-muted">
-                        This action cannot be undone.
+                        Это действие нельзя отменить.
                     </span>
 
                     <button
@@ -146,7 +146,7 @@ const ProjectSettings = ({ project }) => {
                         onClick={handleDelete}
                         className="button button--danger"
                     >
-                        Delete this project
+                        Удалить проект
                     </button>
                 </div>
             </Card>

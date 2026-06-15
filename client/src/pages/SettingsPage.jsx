@@ -6,7 +6,7 @@ const SettingsPage = () => {
         <div className="page page--narrow u-content-width">
             <header className="page-header">
                 <div className="page-header__content">
-                    <h1>Account Settings</h1>
+                    <h1>Настройки аккаунта</h1>
                 </div>
             </header>
 

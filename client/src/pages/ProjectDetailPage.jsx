@@ -45,7 +45,7 @@ const ProjectDetailPage = () => {
                 setUserRole("viewer");
             }
         } catch (err) {
-            setError("Failed to load project data.");
+            setError("Не удалось загрузить данные проекта.");
             console.error(err);
         } finally {
             setIsLoading(false);
@@ -62,18 +62,18 @@ const ProjectDetailPage = () => {
     };
 
     const handleDeleteTab = async (tabId) => {
-        if (window.confirm("Delete this tab?")) {
+        if (window.confirm("Удалить эту вкладку?")) {
             try {
                 await api.delete(`/projects/${projectId}/tabs/${tabId}`);
                 setTabs((prev) => prev.filter((tab) => tab.id !== tabId));
             } catch {
-                alert("Failed to delete tab");
+                alert("Не удалось удалить вкладку");
             }
         }
     };
 
     if (isLoading)
-        return <div className={pageStyles.pageContainer}>Loading...</div>;
+        return <div className={pageStyles.pageContainer}>Загрузка...</div>;
     if (error)
         return (
             <div className={pageStyles.pageContainer}>
@@ -83,8 +83,8 @@ const ProjectDetailPage = () => {
 
     return (
         <div className="page u-content-width">
-            <nav className="breadcrumbs" aria-label="Breadcrumbs">
-                <Link to="/projects">My Projects</Link>
+            <nav className="breadcrumbs" aria-label="Навигационная цепочка">
+                <Link to="/projects">Мои проекты</Link>
                 <span>/</span>
                 <span>{project.name}</span>
             </nav>
@@ -103,7 +103,7 @@ const ProjectDetailPage = () => {
             <div
                 className="tabs-nav"
                 role="tablist"
-                aria-label="Project sections"
+                aria-label="Разделы проекта"
             >
                 <button
                     type="button"
@@ -113,7 +113,7 @@ const ProjectDetailPage = () => {
                     onClick={() => setActiveTab("tabs")}
                 >
                     <span aria-hidden="true">🖥️</span>
-                    Tabs
+                    Вкладки
                     <span className="tabs-nav__count">({tabs.length})</span>
                 </button>
 
@@ -125,7 +125,7 @@ const ProjectDetailPage = () => {
                     onClick={() => setActiveTab("members")}
                 >
                     <span aria-hidden="true">👥</span>
-                    Members
+                    Участники
                 </button>
 
                 {userRole === "owner" && (
@@ -137,7 +137,7 @@ const ProjectDetailPage = () => {
                         onClick={() => setActiveTab("settings")}
                     >
                         <span aria-hidden="true">⚙️</span>
-                        Settings
+                        Настройки
                     </button>
                 )}
             </div>
@@ -147,7 +147,7 @@ const ProjectDetailPage = () => {
                     <>
                         <div className="page-header">
                             <div className="page-header__content">
-                                <h3>Collaborative Workspace</h3>
+                                <h3>Совместное рабочее пространство</h3>
                             </div>
 
                             <div className="page-header__actions">
@@ -160,7 +160,7 @@ const ProjectDetailPage = () => {
                                         }
                                         className="button button--primary"
                                     >
-                                        + New Tab
+                                        + Новая вкладка
                                     </button>
                                 )}
                             </div>
@@ -186,7 +186,7 @@ const ProjectDetailPage = () => {
             <Modal
                 isOpen={isCreateTabModalOpen}
                 onClose={() => setIsCreateTabModalOpen(false)}
-                title="Create New Tab"
+                title="Создать вкладку"
             >
                 <CreateTabForm
                     projectId={projectId}

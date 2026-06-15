@@ -23,8 +23,8 @@ const ProjectsDashboardPage = () => {
 
             setProjects(validProjects);
         } catch (err) {
-            setError("Failed to fetch projects.");
-            toast.error("Failed to load projects");
+            setError("Не удалось получить список проектов.");
+            toast.error("Не удалось загрузить проекты");
             console.error(err);
         } finally {
             setIsLoading(false);
@@ -38,7 +38,7 @@ const ProjectsDashboardPage = () => {
     const handleProjectCreated = useCallback((newProject) => {
         setProjects((prev) => [newProject, ...prev]);
         setIsModalOpen(false);
-        toast.success("Project created!");
+        toast.success("Проект создан!");
     }, []);
 
     const handleOpenCreateModal = () => {
@@ -48,7 +48,7 @@ const ProjectsDashboardPage = () => {
     if (isLoading) {
         return (
             <div className="page u-content-width">
-                <p>Loading projects...</p>
+                <p>Загрузка проектов...</p>
             </div>
         );
     }
@@ -56,7 +56,7 @@ const ProjectsDashboardPage = () => {
     return (
         <div className="page u-content-width">
             <header className="page-header">
-                <h1>My Projects</h1>
+                <h1>Мои проекты</h1>
             </header>
 
             {error && <p style={{ color: "red" }}>{error}</p>}
@@ -70,7 +70,7 @@ const ProjectsDashboardPage = () => {
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                title="Create New Project"
+                title="Создать проект"
             >
                 <CreateProjectForm onSuccess={handleProjectCreated} />
             </Modal>

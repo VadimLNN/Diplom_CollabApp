@@ -4,6 +4,12 @@ import api from "../../../shared/api/axios.js";
 import Card from "../../../shared/ui/Card/Card.jsx";
 import Modal from "../../../shared/ui/Modal/Modal.jsx";
 
+const roleLabels = {
+    owner: "Владелец",
+    editor: "Редактор",
+    viewer: "Наблюдатель",
+};
+
 const ProjectMembers = ({ projectId, userRole }) => {
     const [members, setMembers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -21,7 +27,9 @@ const ProjectMembers = ({ projectId, userRole }) => {
             );
             setMembers(response.data);
         } catch (err) {
-            toast.error(err.response?.data?.error || "Failed to load members");
+            toast.error(
+                err.response?.data?.error || "Не удалось загрузить участников",
+            );
         } finally {
             setIsLoading(false);
         }
@@ -35,7 +43,7 @@ const ProjectMembers = ({ projectId, userRole }) => {
         event.preventDefault();
 
         if (!inviteEmail.trim()) {
-            toast.error("Enter user email");
+            toast.error("Введите email пользователя");
             return;
         }
 
@@ -56,13 +64,16 @@ const ProjectMembers = ({ projectId, userRole }) => {
                 role: selectedRole,
             });
 
-            toast.success(`Invitation sent to ${inviteEmail}`);
+            toast.success(`Приглашение отправлено на ${inviteEmail}`);
             setInviteEmail("");
             setSelectedRole("editor");
             setIsInviteModalOpen(false);
             fetchMembers();
         } catch (err) {
-            toast.error(err.response?.data?.error || "Failed to invite user");
+            toast.error(
+                err.response?.data?.error ||
+                    "Не удалось пригласить пользователя",
+            );
         } finally {
             setIsInviting(false);
         }
@@ -73,7 +84,7 @@ const ProjectMembers = ({ projectId, userRole }) => {
             (t) => (
                 <div className="toast-confirm">
                     <p className="toast-confirm__text">
-                        Remove <strong>{username}</strong> from project?
+                        Удалить <strong>{username}</strong> из проекта?
                     </p>
 
                     <div className="toast-confirm__actions">
@@ -82,7 +93,7 @@ const ProjectMembers = ({ projectId, userRole }) => {
                             className="button button--ghost"
                             onClick={() => toast.dismiss(t.id)}
                         >
-                            Cancel
+                            Отмена
                         </button>
 
                         <button
@@ -96,19 +107,19 @@ const ProjectMembers = ({ projectId, userRole }) => {
                                         `/projects/${projectId}/permissions/${userId}`,
                                     ),
                                     {
-                                        loading: "Removing member...",
+                                        loading: "Удаление участника...",
                                         success: () => {
                                             fetchMembers();
-                                            return "Member removed";
+                                            return "Участник удален";
                                         },
                                         error: (err) =>
                                             err.response?.data?.error ||
-                                            "Failed to remove member",
+                                            "Не удалось удалить участника",
                                     },
                                 );
                             }}
                         >
-                            Remove
+                            Удалить
                         </button>
                     </div>
                 </div>
@@ -123,7 +134,7 @@ const ProjectMembers = ({ projectId, userRole }) => {
     if (isLoading) {
         return (
             <Card>
-                <p className="u-text-muted">Loading members...</p>
+                <p className="u-text-muted">Загрузка участников...</p>
             </Card>
         );
     }
@@ -133,10 +144,10 @@ const ProjectMembers = ({ projectId, userRole }) => {
             {userRole === "owner" && (
                 <Card>
                     <div className="card__head">
-                        <h3>Invite a new member</h3>
+                        <h3>Пригласить участника</h3>
                         <p className="card__subtitle">
-                            Add teammates by email and give them access to this
-                            workspace.
+                            Добавьте участника по email и предоставьте ему
+                            доступ к проекту.
                         </p>
                     </div>
 
@@ -146,7 +157,7 @@ const ProjectMembers = ({ projectId, userRole }) => {
                                 className="field__label"
                                 htmlFor="invite-email"
                             >
-                                User email
+                                Email пользователя
                             </label>
 
                             <input
@@ -156,7 +167,7 @@ const ProjectMembers = ({ projectId, userRole }) => {
                                 onChange={(event) =>
                                     setInviteEmail(event.target.value)
                                 }
-                                placeholder="Enter user email"
+                                placeholder="Введите email пользователя"
                                 className="field__control"
                                 disabled={isInviting}
                                 required
@@ -169,7 +180,7 @@ const ProjectMembers = ({ projectId, userRole }) => {
                                 className="button button--primary"
                                 disabled={isInviting || !inviteEmail.trim()}
                             >
-                                Continue
+                                Продолжить
                             </button>
                         </div>
                     </form>
@@ -178,16 +189,14 @@ const ProjectMembers = ({ projectId, userRole }) => {
 
             <Card>
                 <div className="card__head">
-                    <h3>Team Members</h3>
+                    <h3>Участники проекта</h3>
                     <p className="card__subtitle">
-                        {members.length}{" "}
-                        {members.length === 1 ? "member" : "members"} in this
-                        project.
+                        Участников в проекте: {members.length}.
                     </p>
                 </div>
 
                 {members.length === 0 ? (
-                    <p className="u-text-muted">No members yet.</p>
+                    <p className="u-text-muted">Участников пока нет.</p>
                 ) : (
                     <ul className="member-list">
                         {members.map((member) => (
@@ -207,7 +216,7 @@ const ProjectMembers = ({ projectId, userRole }) => {
                                                 : "badge--neutral"
                                         }`}
                                     >
-                                        {member.role}
+                                        {roleLabels[member.role] || member.role}
                                     </span>
 
                                     {userRole === "owner" &&
@@ -222,7 +231,7 @@ const ProjectMembers = ({ projectId, userRole }) => {
                                                 }
                                                 className="button button--ghost"
                                             >
-                                                Remove
+                                                Удалить
                                             </button>
                                         )}
                                 </div>
@@ -234,13 +243,13 @@ const ProjectMembers = ({ projectId, userRole }) => {
             <Modal
                 isOpen={isInviteModalOpen}
                 onClose={() => setIsInviteModalOpen(false)}
-                title="Invite member"
-                description={`Choose a role for ${inviteEmail}`}
+                title="Пригласить участника"
+                description={`Выберите роль для ${inviteEmail}`}
             >
                 <form onSubmit={handleInvite} className="form">
                     <div className="field">
                         <label className="field__label" htmlFor="invite-role">
-                            Role
+                            Роль
                         </label>
 
                         <select
@@ -253,10 +262,11 @@ const ProjectMembers = ({ projectId, userRole }) => {
                             disabled={isInviting}
                         >
                             <option value="viewer">
-                                Viewer — can view project content
+                                Наблюдатель — может просматривать содержимое
+                                проекта
                             </option>
                             <option value="editor">
-                                Editor — can edit project content
+                                Редактор — может изменять содержимое проекта
                             </option>
                         </select>
                     </div>
@@ -269,8 +279,10 @@ const ProjectMembers = ({ projectId, userRole }) => {
                             </div>
 
                             <div>
-                                <span className="u-text-muted">Role</span>
-                                <strong>{selectedRole}</strong>
+                                <span className="u-text-muted">Роль</span>
+                                <strong>
+                                    {roleLabels[selectedRole] || selectedRole}
+                                </strong>
                             </div>
                         </div>
                     </div>
@@ -282,7 +294,7 @@ const ProjectMembers = ({ projectId, userRole }) => {
                             onClick={() => setIsInviteModalOpen(false)}
                             disabled={isInviting}
                         >
-                            Cancel
+                            Отмена
                         </button>
 
                         <button
@@ -291,7 +303,9 @@ const ProjectMembers = ({ projectId, userRole }) => {
                             disabled={isInviting}
                         >
                             <span className="button__label">
-                                {isInviting ? "Inviting..." : "Send invite"}
+                                {isInviting
+                                    ? "Отправка..."
+                                    : "Отправить приглашение"}
                             </span>
                         </button>
                     </div>

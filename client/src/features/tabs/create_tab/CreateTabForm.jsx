@@ -26,13 +26,13 @@ const CreateTabForm = ({ projectId, onSuccess, isOpen }) => {
                 title,
                 type: tabType,
             });
-            toast.success(`Tab "${title}" created!`);
+            toast.success(`Вкладка «${title}» создана!`);
             onSuccess(response.data);
         } catch (err) {
             const errorMessage =
                 err.response?.data?.errors?.[0]?.msg ||
                 err.response?.data?.error ||
-                "Failed to create tab";
+                "Не удалось создать вкладку";
             toast.error(errorMessage);
         }
     };
@@ -41,14 +41,14 @@ const CreateTabForm = ({ projectId, onSuccess, isOpen }) => {
         <form onSubmit={handleSubmit} className="form">
             <div className="field">
                 <label className="field__label" htmlFor="tab-title">
-                    Tab title
+                    Название вкладки
                 </label>
                 <input
                     id="tab-title"
                     ref={titleInputRef}
                     className="field__control"
                     type="text"
-                    placeholder="Enter tab title"
+                    placeholder="Введите название вкладки"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     required
@@ -57,7 +57,7 @@ const CreateTabForm = ({ projectId, onSuccess, isOpen }) => {
 
             <div className="field">
                 <label className="field__label" htmlFor="tab-type">
-                    Tab type
+                    Тип вкладки
                 </label>
                 <select
                     id="tab-type"
@@ -66,14 +66,14 @@ const CreateTabForm = ({ projectId, onSuccess, isOpen }) => {
                     className="field__control"
                     required
                 >
-                    <option value="text">Text Document</option>
-                    <option value="board">Drawing Board</option>
+                    <option value="text">Текстовый документ</option>
+                    <option value="board">Доска для рисования</option>
                 </select>
             </div>
 
             <div className="form__actions">
                 <button type="submit" className="button button--primary">
-                    Create Tab
+                    Создать вкладку
                 </button>
             </div>
         </form>

@@ -8,7 +8,7 @@ const Header = () => {
 
     const handleLogout = () => {
         logout();
-        toast.success("You have been logged out.");
+        toast.success("Вы вышли из аккаунта.");
         navigate("/login");
     };
 
@@ -26,14 +26,14 @@ const Header = () => {
                     {user ? (
                         <>
                             <span className="app-header__user">
-                                Hi, {user.username}!
+                                Привет, {user.username}!
                             </span>
 
                             <NavLink
                                 to="/settings"
                                 className="app-header__link"
                             >
-                                Settings
+                                Настройки
                             </NavLink>
 
                             <button
@@ -41,20 +41,20 @@ const Header = () => {
                                 onClick={handleLogout}
                                 className="button button--ghost"
                             >
-                                Log out
+                                Выйти
                             </button>
                         </>
                     ) : (
                         <>
                             <NavLink to="/login" className="app-header__link">
-                                Login
+                                Войти
                             </NavLink>
 
                             <NavLink
                                 to="/register"
                                 className="app-header__link"
                             >
-                                Register
+                                Регистрация
                             </NavLink>
                         </>
                     )}

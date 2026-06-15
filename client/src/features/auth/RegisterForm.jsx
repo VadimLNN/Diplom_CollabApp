@@ -23,15 +23,15 @@ const RegisterForm = () => {
         await toast.promise(
             api.post("/auth/register", { username, email, password }),
             {
-                loading: "Registering...",
+                loading: "Регистрация...",
                 success: () => {
                     setTimeout(() => navigate("/login"), 1500);
-                    return <b>Registration successful! Redirecting...</b>;
+                    return <b>Регистрация завершена! Перенаправляем...</b>;
                 },
                 error: (error) => (
                     <b>
                         {error.response?.data?.error ||
-                            "Registration failed"}
+                            "Не удалось зарегистрироваться"}
                     </b>
                 ),
             },
@@ -44,7 +44,7 @@ const RegisterForm = () => {
             aria-labelledby="register-title"
         >
             <div className="card__head">
-                <h1 id="register-title">Register</h1>
+                <h1 id="register-title">Регистрация</h1>
             </div>
 
             <form className="form" onSubmit={handleSubmit}>

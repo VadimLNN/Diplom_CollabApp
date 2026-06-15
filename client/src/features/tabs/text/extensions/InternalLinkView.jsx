@@ -39,14 +39,14 @@ const InternalLinkView = ({ node }) => {
             data-target-anchor-type={targetAnchorType}
             data-target-anchor-id={targetAnchorId}
             onClick={handleClick}
-            title={`Open ${targetLabel || "linked item"}`}
+            title={`Открыть ${targetLabel || "связанный элемент"}`}
         >
             <span className="internal-link__icon">
                 {targetAnchorType === "board-element" ? "⬚" : "↗"}
             </span>
 
             <span className="internal-link__label">
-                {targetLabel || "Untitled"}
+                {targetLabel || "Без названия"}
             </span>
         </NodeViewWrapper>
     );
