@@ -11,10 +11,12 @@ import {
 } from "../../../shared/links/textBlockClipboard";
 import { getCollaborationUser } from "../../../shared/realtime/collaborationUser";
 import { useHocusProvider } from "../../../shared/realtime/getHocusProvider";
+import { addInlineTabLink } from "../../../shared/realtime/linkIndex";
+import LinkActionsMenu from "../link-actions/LinkActionsMenu";
 import { useBoardAwareness } from "./useBoardAwareness";
 import { useBoardCollaboration } from "./useBoardCollaboration";
 
-const BoardEditor = ({ tab, canEdit }) => {
+const BoardEditor = ({ tab, canEdit, projectTabs = [] }) => {
     const {
         provider,
         connected,
@@ -147,7 +149,45 @@ const BoardEditor = ({ tab, canEdit }) => {
         setCopiedElementNotice("Ссылка на абзац прикреплена к элементу доски.");
     }, [getSelectedBoardElement, updateBoardElement]);
 
-    const handleOpenLinkedParagraph = useCallback(() => {
+    const handleAttachTabLinkToSelectedElement = useCallback(
+        (targetTab) => {
+            const selectedElement = getSelectedBoardElement();
+
+            if (!provider || !selectedElement || !targetTab) {
+                return;
+            }
+
+            const link = addInlineTabLink({
+                ydoc: provider.document,
+                sourceTab: tab,
+                targetTab,
+                sourceType: "board",
+            });
+
+            if (!link) {
+                return;
+            }
+
+            updateBoardElement({
+                ...selectedElement,
+                customData: {
+                    ...(selectedElement.customData || {}),
+                    internalLink: {
+                        ...link.target,
+                        linkId: link.id,
+                        linkedAt: Date.now(),
+                    },
+                },
+            });
+
+            setCopiedElementNotice(
+                `Ссылка на вкладку «${targetTab.title}» прикреплена.`,
+            );
+        },
+        [getSelectedBoardElement, provider, tab, updateBoardElement],
+    );
+
+    const handleOpenInternalLink = useCallback(() => {
         if (!selectedInternalLink || !projectId) {
             return;
         }
@@ -235,7 +275,7 @@ const BoardEditor = ({ tab, canEdit }) => {
                     {connected ? "Подключено" : "Нет подключения"}
                 </span>
 
-                {canEdit && (
+                {canEdit && selectedBoardElement && (
                     <div className="board-link-tools">
                         {copiedElementNotice && (
                             <span className="board-link-tools__notice">
@@ -243,31 +283,39 @@ const BoardEditor = ({ tab, canEdit }) => {
                             </span>
                         )}
 
-                        <button
-                            type="button"
-                            className="button button--secondary board-link-tools__button"
-                            onClick={handleCopySelectedElementAnchor}
-                        >
-                            Копировать ссылку на элемент
-                        </button>
-
-                        <button
-                            type="button"
-                            className="button button--secondary board-link-tools__button"
-                            onClick={handleAttachTextBlockLinkToSelectedElement}
-                        >
-                            Прикрепить ссылку на абзац
-                        </button>
-
-                        {selectedInternalLink && (
-                            <button
-                                type="button"
-                                className="button button--secondary board-link-tools__button"
-                                onClick={handleOpenLinkedParagraph}
-                            >
-                                Открыть связанный абзац
-                            </button>
-                        )}
+                        <LinkActionsMenu
+                            currentTab={tab}
+                            projectTabs={projectTabs}
+                            onSelectTab={handleAttachTabLinkToSelectedElement}
+                            tabActionLabel="Прикрепить ссылку на вкладку"
+                            actions={[
+                                {
+                                    id: "copy-board-element",
+                                    label: "Копировать ссылку на элемент",
+                                    onSelect: handleCopySelectedElementAnchor,
+                                },
+                                {
+                                    id: "attach-text-block",
+                                    label: "Прикрепить ссылку на абзац",
+                                    onSelect:
+                                        handleAttachTextBlockLinkToSelectedElement,
+                                },
+                                ...(selectedInternalLink
+                                    ? [
+                                          {
+                                              id: "open-internal-link",
+                                              label:
+                                                  selectedInternalLink.anchorType ===
+                                                  "tab"
+                                                      ? "Открыть связанную вкладку"
+                                                      : "Открыть связанный абзац",
+                                              onSelect:
+                                                  handleOpenInternalLink,
+                                          },
+                                      ]
+                                    : []),
+                            ]}
+                        />
                     </div>
                 )}
             </div>
