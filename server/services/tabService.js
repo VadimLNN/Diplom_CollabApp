@@ -21,7 +21,9 @@ class TabService {
     }
 
     async createTab(userId, projectId, tabData) {
-        if (!tabData.title) {
+        const title = tabData.title?.trim();
+
+        if (!title) {
             const error = new Error("Title is required");
             error.statusCode = 400;
             throw error;
@@ -40,6 +42,7 @@ class TabService {
 
         return tabRepository.create({
             ...tabData,
+            title,
             projectId,
         });
     }

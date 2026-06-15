@@ -29,8 +29,10 @@ class AuthService {
 
     async register(userData) {
         const { username, email, password } = userData;
+        const normalizedUsername = username?.trim();
+        const normalizedEmail = email?.trim();
 
-        if (!username || !email || !password) {
+        if (!normalizedUsername || !normalizedEmail || !password) {
             const error = new Error(
                 "Username, email, and password are required",
             );
@@ -38,7 +40,8 @@ class AuthService {
             throw error;
         }
 
-        const existingUser = await userRepository.findByUsername(username);
+        const existingUser =
+            await userRepository.findByUsername(normalizedUsername);
         if (existingUser) {
             const error = new Error("Username already exists");
             error.statusCode = 409;
@@ -48,16 +51,17 @@ class AuthService {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         return userRepository.create({
-            username,
-            email,
+            username: normalizedUsername,
+            email: normalizedEmail,
             hashedPassword,
         });
     }
 
     async login(credentials) {
         const { username, password } = credentials;
+        const normalizedUsername = username?.trim();
 
-        const user = await userRepository.findByUsername(username);
+        const user = await userRepository.findByUsername(normalizedUsername);
         if (!user) {
             const error = new Error("Invalid credentials");
             error.statusCode = 401;

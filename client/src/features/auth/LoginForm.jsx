@@ -20,7 +20,10 @@ const LoginForm = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        await toast.promise(login({ username, password }), {
+        const normalizedUsername = username.trim();
+        setUsername(normalizedUsername);
+
+        await toast.promise(login({ username: normalizedUsername, password }), {
             loading: "Выполняется вход...",
             success: () => {
                 navigate("/projects");
@@ -51,6 +54,7 @@ const LoginForm = () => {
                         className="field__control"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
+                        onBlur={() => setUsername((value) => value.trim())}
                         autoComplete="username"
                         required
                     />

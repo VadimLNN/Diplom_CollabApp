@@ -2,12 +2,17 @@ const projectRepository = require("../repositories/projectRepository");
 
 class ProjectService {
     async createProject(userId, projectData) {
-        if (!projectData.name) {
+        const name = projectData.name?.trim();
+        const description = projectData.description?.trim();
+
+        if (!name) {
             throw new Error("Project name is required");
         }
 
         return projectRepository.create({
             ...projectData,
+            name,
+            description,
             ownerId: userId,
         });
     }

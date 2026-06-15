@@ -20,8 +20,18 @@ const RegisterForm = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        const normalizedUsername = username.trim();
+        const normalizedEmail = email.trim();
+
+        setUsername(normalizedUsername);
+        setEmail(normalizedEmail);
+
         await toast.promise(
-            api.post("/auth/register", { username, email, password }),
+            api.post("/auth/register", {
+                username: normalizedUsername,
+                email: normalizedEmail,
+                password,
+            }),
             {
                 loading: "Регистрация...",
                 success: () => {
@@ -60,6 +70,7 @@ const RegisterForm = () => {
                         className="field__control"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
+                        onBlur={() => setUsername((value) => value.trim())}
                         autoComplete="username"
                         required
                     />
@@ -76,6 +87,7 @@ const RegisterForm = () => {
                         className="field__control"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        onBlur={() => setEmail((value) => value.trim())}
                         autoComplete="email"
                         required
                     />

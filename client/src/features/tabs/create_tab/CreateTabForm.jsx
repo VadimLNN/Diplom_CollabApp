@@ -21,12 +21,21 @@ const CreateTabForm = ({ projectId, onSuccess, isOpen }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const normalizedTitle = title.trim();
+        setTitle(normalizedTitle);
+
+        if (!normalizedTitle) {
+            toast.error("Укажите название вкладки");
+            return;
+        }
+
         try {
             const response = await api.post(`/projects/${projectId}/tabs`, {
-                title,
+                title: normalizedTitle,
                 type: tabType,
             });
-            toast.success(`Вкладка «${title}» создана!`);
+            toast.success(`Вкладка «${normalizedTitle}» создана!`);
             onSuccess(response.data);
         } catch (err) {
             const errorMessage =
@@ -51,6 +60,7 @@ const CreateTabForm = ({ projectId, onSuccess, isOpen }) => {
                     placeholder="Введите название вкладки"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
+                    onBlur={() => setTitle((value) => value.trim())}
                     required
                 />
             </div>
@@ -72,7 +82,11 @@ const CreateTabForm = ({ projectId, onSuccess, isOpen }) => {
             </div>
 
             <div className="form__actions">
-                <button type="submit" className="button button--primary">
+                <button
+                    type="submit"
+                    className="button button--primary"
+                    disabled={!title.trim()}
+                >
                     Создать вкладку
                 </button>
             </div>

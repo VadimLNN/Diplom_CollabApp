@@ -69,6 +69,7 @@ const CreateProjectForm = ({ onSuccess, isOpen }) => {
                     placeholder="Введите название проекта"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
+                    onBlur={() => setName((value) => value.trim())}
                     disabled={isLoading}
                     required
                 />
@@ -84,6 +85,7 @@ const CreateProjectForm = ({ onSuccess, isOpen }) => {
                     placeholder="Описание (необязательно)"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
+                    onBlur={() => setDescription((value) => value.trim())}
                     rows="4"
                     disabled={isLoading}
                 />
