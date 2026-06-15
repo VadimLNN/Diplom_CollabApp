@@ -25,6 +25,7 @@ const EditorRenderer = ({ tab, userRole, projectTabs = [] }) => {
                     <BoardEditor
                         tab={tab}
                         canEdit={canEdit}
+                        projectTabs={projectTabs}
                     />
                 );
 

@@ -36,7 +36,7 @@ import BlockIdExtension from "../extensions/BlockIdExtension";
 import InternalLinkNode from "../extensions/InternalLinkNode";
 import { getCurrentTextBlock } from "../utils/getCurrentTextBlock";
 
-import InternalLinkPicker from "./InternalLinkPicker";
+import LinkActionsMenu from "../../link-actions/LinkActionsMenu";
 
 const TextEditorReady = ({
     provider,
@@ -382,39 +382,28 @@ const TextEditorReady = ({
 
                 {canEdit && (
                     <div className="editor-link-actions">
-                        <InternalLinkPicker
+                        <LinkActionsMenu
                             currentTab={tab}
                             projectTabs={projectTabs}
-                            disabled={!editor}
-                            onSelect={handleInsertTabLink}
+                            onSelectTab={handleInsertTabLink}
+                            actions={[
+                                {
+                                    id: "insert-board-element",
+                                    label: "Вставить ссылку на элемент доски",
+                                    onSelect: handleInsertBoardElementLink,
+                                },
+                                {
+                                    id: "insert-text-block",
+                                    label: "Вставить ссылку на абзац",
+                                    onSelect: handleInsertTextBlockLink,
+                                },
+                                {
+                                    id: "copy-text-block",
+                                    label: "Копировать ссылку на абзац",
+                                    onSelect: handleCopyCurrentParagraphLink,
+                                },
+                            ]}
                         />
-
-                        <button
-                            type="button"
-                            className="button button--secondary editor-link-actions__button"
-                            onClick={handleInsertBoardElementLink}
-                            disabled={!editor}
-                        >
-                            Вставить ссылку на элемент доски
-                        </button>
-
-                        <button
-                            type="button"
-                            className="button button--secondary editor-link-actions__button"
-                            onClick={handleInsertTextBlockLink}
-                            disabled={!editor}
-                        >
-                            Вставить ссылку на абзац
-                        </button>
-
-                        <button
-                            type="button"
-                            className="button button--secondary editor-link-actions__button"
-                            onClick={handleCopyCurrentParagraphLink}
-                            disabled={!editor}
-                        >
-                            Копировать ссылку на абзац
-                        </button>
                     </div>
                 )}
             </div>
