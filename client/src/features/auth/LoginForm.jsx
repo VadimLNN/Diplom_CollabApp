@@ -26,8 +26,8 @@ const LoginForm = () => {
                 navigate("/projects");
                 return <b>Welcome back!</b>;
             },
-            error: (err) => (
-                <b>{err.response?.data?.error || "Login failed!"}</b>
+            error: (error) => (
+                <b>{error.response?.data?.error || "Login failed!"}</b>
             ),
         });
     };
