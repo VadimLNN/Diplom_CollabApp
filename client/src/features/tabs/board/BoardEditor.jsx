@@ -50,7 +50,9 @@ const BoardEditor = ({ tab, canEdit }) => {
                 const payload = JSON.parse(atob(token.split(".")[1]));
                 return payload?.username || payload?.sub || null;
             }
-        } catch {}
+        } catch {
+            return null;
+        }
         return null;
     })();
 
@@ -277,11 +279,7 @@ const BoardEditor = ({ tab, canEdit }) => {
                     theme="dark"
                     viewModeEnabled={!canEdit}
                     onPointerUpdate={onPointerUpdate}
-                    excalidrawAPI={(api) => {
-                        handleApiReady(api);
-                        // api уже в ref'е useBoardCollaboration — придётся прокинуть.
-                        // ПОКА ЧТО пропускаем, т.к. excalidrawAPI от useBoardCollaboration внутри useBoardCollaboration, но не доступен здесь.
-                    }}
+                    excalidrawAPI={handleApiReady}
                     onChange={handleChange}
                 />
             </div>

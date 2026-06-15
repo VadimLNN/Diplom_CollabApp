@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import ProjectMembers from "../features/projects/manage-members/ProjectMembers";
 import ProjectSettings from "../features/projects/settings/ProjectSettings";
 import CreateTabForm from "../features/tabs/create_tab/CreateTabForm";
@@ -13,18 +13,12 @@ const ProjectDetailPage = () => {
     const { projectId } = useParams();
     const [activeTab, setActiveTab] = useState("tabs");
 
-    const navigate = useNavigate();
-
     const [project, setProject] = useState(null);
     const [tabs, setTabs] = useState([]);
     const [userRole, setUserRole] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
     const [isCreateTabModalOpen, setIsCreateTabModalOpen] = useState(false);
-
-    const handleTabClick = (tabId) => {
-        navigate(`/projects/${projectId}/tabs/${tabId}`);
-    };
 
     const fetchData = useCallback(async () => {
         try {
@@ -70,9 +64,9 @@ const ProjectDetailPage = () => {
     const handleDeleteTab = async (tabId) => {
         if (window.confirm("Delete this tab?")) {
             try {
-                await api.delete(`/tabs/${tabId}`);
+                await api.delete(`/projects/${projectId}/tabs/${tabId}`);
                 setTabs((prev) => prev.filter((tab) => tab.id !== tabId));
-            } catch (err) {
+            } catch {
                 alert("Failed to delete tab");
             }
         }
@@ -157,15 +151,18 @@ const ProjectDetailPage = () => {
                             </div>
 
                             <div className="page-header__actions">
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setIsCreateTabModalOpen(true)
-                                    }
-                                    className="button button--primary"
-                                >
-                                    + New Tab
-                                </button>
+                                {(userRole === "owner" ||
+                                    userRole === "editor") && (
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setIsCreateTabModalOpen(true)
+                                        }
+                                        className="button button--primary"
+                                    >
+                                        + New Tab
+                                    </button>
+                                )}
                             </div>
                         </div>
 
@@ -173,7 +170,6 @@ const ProjectDetailPage = () => {
                             tabs={tabs}
                             onCreateClick={() => setIsCreateTabModalOpen(true)}
                             userRole={userRole}
-                            onTabClick={handleTabClick}
                             onDeleteTab={handleDeleteTab}
                         />
                     </>

@@ -25,15 +25,7 @@ const EditorRenderer = ({ tab, userRole, projectTabs = [] }) => {
                     <BoardEditor
                         tab={tab}
                         canEdit={canEdit}
-                        projectTabs={projectTabs}
                     />
-                );
-
-            case "code":
-                return (
-                    <div className="card">
-                        Code editor is not implemented yet.
-                    </div>
                 );
 
             default:

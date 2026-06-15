@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import Card from "../../shared/ui/Card/Card";
 
-const TabCard = ({ tab, isActive, onDelete, projectId }) => {
+const TabCard = ({ tab, isActive, onDelete }) => {
     const getIcon = (type) => {
         const icons = {
             text: "📄",

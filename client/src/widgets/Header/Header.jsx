@@ -1,7 +1,6 @@
-// src/widgets/Header/ui/Header.jsx
 import toast from "react-hot-toast";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { useAuth } from "../../app/providers/AuthProvider";
+import { useAuth } from "../../app/providers/authContext";
 
 const Header = () => {
     const { user, logout } = useAuth();

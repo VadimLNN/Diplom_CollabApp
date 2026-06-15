@@ -24,7 +24,7 @@ const RegisterForm = () => {
             api.post("/auth/register", { username, email, password }),
             {
                 loading: "Registering...",
-                success: (response) => {
+                success: () => {
                     setTimeout(() => navigate("/login"), 1500);
                     return <b>Registration successful! Redirecting...</b>;
                 },

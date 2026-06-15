@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../app/providers/AuthProvider";
+import { useAuth } from "../../app/providers/authContext";
 
 const LoginForm = () => {
     const [username, setUsername] = useState("");
@@ -22,7 +22,7 @@ const LoginForm = () => {
 
         await toast.promise(login({ username, password }), {
             loading: "Logging in...",
-            success: (response) => {
+            success: () => {
                 navigate("/projects");
                 return <b>Welcome back!</b>;
             },

@@ -5,7 +5,6 @@ import AuroraBG from "../shared/ui/AuroraBG/AuroraBG";
 import Header from "../widgets/Header/Header";
 import { AuthProvider } from "./providers/AuthProvider";
 import Routes from "./routes/index";
-import "./styles/index.scss";
 
 const App = () => (
     <Router>
