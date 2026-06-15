@@ -9,6 +9,7 @@ import {
     getTextBlockAnchor,
 } from "../../../shared/links/textBlockClipboard";
 import { useHocusProvider } from "../../../shared/realtime/getHocusProvider";
+import { useBoardAwareness } from "./useBoardAwareness";
 import { useBoardCollaboration } from "./useBoardCollaboration";
 
 const BoardEditor = ({ tab, canEdit }) => {
@@ -27,6 +28,7 @@ const BoardEditor = ({ tab, canEdit }) => {
     const [copiedElementNotice, setCopiedElementNotice] = useState("");
 
     const {
+        excalidrawAPIRef,
         apiReady,
         handleApiReady,
         handleChange,
@@ -40,6 +42,24 @@ const BoardEditor = ({ tab, canEdit }) => {
         canEdit,
         onSelectionChange: setSelectedElementIds,
     });
+
+    const username = (() => {
+        try {
+            const token = localStorage.getItem("token");
+            if (token) {
+                const payload = JSON.parse(atob(token.split(".")[1]));
+                return payload?.username || payload?.sub || null;
+            }
+        } catch {}
+        return null;
+    })();
+
+    const { handlePointerUpdate: onPointerUpdate } = useBoardAwareness(
+        provider,
+        excalidrawAPIRef,
+        username,
+        apiReady,
+    );
 
     const getSelectedBoardElement = useCallback(() => {
         const selectedIds = Object.keys(selectedElementIds || {});
@@ -256,7 +276,12 @@ const BoardEditor = ({ tab, canEdit }) => {
                 <Excalidraw
                     theme="dark"
                     viewModeEnabled={!canEdit}
-                    excalidrawAPI={handleApiReady}
+                    onPointerUpdate={onPointerUpdate}
+                    excalidrawAPI={(api) => {
+                        handleApiReady(api);
+                        // api уже в ref'е useBoardCollaboration — придётся прокинуть.
+                        // ПОКА ЧТО пропускаем, т.к. excalidrawAPI от useBoardCollaboration внутри useBoardCollaboration, но не доступен здесь.
+                    }}
                     onChange={handleChange}
                 />
             </div>

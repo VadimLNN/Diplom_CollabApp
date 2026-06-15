@@ -10,7 +10,7 @@ import {
 
 const LOCAL_ORIGIN = "local-excalidraw-element-change";
 const LOCAL_EDIT_GRACE_MS = 300;
-const SYNC_INTERVAL_MS = 33;
+const SYNC_DEBOUNCE_MS = 150;
 
 export const useBoardCollaboration = ({
     provider,
@@ -25,12 +25,11 @@ export const useBoardCollaboration = ({
     const initialSceneAppliedRef = useRef(false);
     const applyingRemoteRef = useRef(false);
 
-    const localElementsMapRef = useRef(new Map());
+    const lastSyncedElementsMapRef = useRef(new Map());
     const localEditTimesRef = useRef(new Map());
 
     const pendingElementsRef = useRef(null);
     const pendingSyncTimerRef = useRef(null);
-    const lastSyncAtRef = useRef(0);
     const remoteApplyTimerRef = useRef(null);
 
     const ydoc = provider?.document;
@@ -78,10 +77,11 @@ export const useBoardCollaboration = ({
 
         excalidrawAPI.updateScene({
             elements: mergedElements,
+            commitToHistory: false,
         });
 
-        localElementsMapRef.current = new Map(
-            mergedElements.map((element) => [
+        lastSyncedElementsMapRef.current = new Map(
+            remoteElements.map((element) => [
                 element.id,
                 cloneElement(element),
             ]),
@@ -152,11 +152,12 @@ export const useBoardCollaboration = ({
 
         const nextElements = pendingElementsRef.current;
         const changedElements = getChangedElements(
-            localElementsMapRef.current,
+            lastSyncedElementsMapRef.current,
             nextElements,
         );
 
         if (changedElements.length === 0) {
+            pendingElementsRef.current = null;
             pendingSyncTimerRef.current = null;
             return;
         }
@@ -172,28 +173,22 @@ export const useBoardCollaboration = ({
             syncOrderArray(orderArray, getElementOrder(nextElements));
         }, LOCAL_ORIGIN);
 
-        localElementsMapRef.current = new Map(
+        lastSyncedElementsMapRef.current = new Map(
             nextElements.map((element) => [element.id, cloneElement(element)]),
         );
 
-        lastSyncAtRef.current = Date.now();
+        pendingElementsRef.current = null;
         pendingSyncTimerRef.current = null;
     }, [ydoc, elementsMap, orderArray]);
 
     const scheduleFlush = useCallback(() => {
-        const now = Date.now();
-        const elapsed = now - lastSyncAtRef.current;
+        if (pendingSyncTimerRef.current) {
+            clearTimeout(pendingSyncTimerRef.current);
+        }
 
-        if (elapsed >= SYNC_INTERVAL_MS) {
+        pendingSyncTimerRef.current = setTimeout(() => {
             flushPendingElements();
-            return;
-        }
-
-        if (!pendingSyncTimerRef.current) {
-            pendingSyncTimerRef.current = setTimeout(() => {
-                flushPendingElements();
-            }, SYNC_INTERVAL_MS - elapsed);
-        }
+        }, SYNC_DEBOUNCE_MS);
     }, [flushPendingElements]);
 
     const handleChange = useCallback(
@@ -264,7 +259,7 @@ export const useBoardCollaboration = ({
                 );
             }, LOCAL_ORIGIN);
 
-            localElementsMapRef.current = new Map(
+            lastSyncedElementsMapRef.current = new Map(
                 updatedElements.map((element) => [
                     element.id,
                     cloneElement(element),
@@ -291,6 +286,7 @@ export const useBoardCollaboration = ({
                     [elementId]: true,
                 },
             },
+            commitToHistory: false,
         });
     }, []);
 
@@ -311,8 +307,7 @@ export const useBoardCollaboration = ({
         initialSceneAppliedRef.current = false;
         applyingRemoteRef.current = false;
         pendingElementsRef.current = null;
-        lastSyncAtRef.current = 0;
-        localElementsMapRef.current = new Map();
+        lastSyncedElementsMapRef.current = new Map();
         localEditTimesRef.current = new Map();
         setApiReady(false);
 
