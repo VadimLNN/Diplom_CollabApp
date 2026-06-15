@@ -1,4 +1,3 @@
--- 1. Пользователи
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
@@ -7,7 +6,6 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2. Проекты (пространства)
 CREATE TABLE IF NOT EXISTS projects (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -17,7 +15,6 @@ CREATE TABLE IF NOT EXISTS projects (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 3. Вкладки (текстовый файл, рисовалка, карта и т.д.)
 CREATE TABLE IF NOT EXISTS tabs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
@@ -30,7 +27,6 @@ CREATE TABLE IF NOT EXISTS tabs (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 4. Y.Doc snapshots (бинарные данные редактирования)
 CREATE TABLE IF NOT EXISTS yjs_documents (
     id SERIAL PRIMARY KEY,
     ydoc_document_name VARCHAR(255) NOT NULL UNIQUE REFERENCES tabs(ydoc_document_name) ON DELETE CASCADE,
@@ -44,7 +40,6 @@ CREATE TABLE IF NOT EXISTS yjs_documents (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 5. Разрешения на проекты (не на отдельные вкладки)
 CREATE TABLE IF NOT EXISTS project_permissions (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -54,27 +49,9 @@ CREATE TABLE IF NOT EXISTS project_permissions (
     CONSTRAINT unique_user_project_permission UNIQUE (user_id, project_id)
 );
 
-CREATE TABLE IF NOT EXISTS yjs_document_save_events (
-    id BIGSERIAL PRIMARY KEY,
-    ydoc_document_name VARCHAR(255) NOT NULL REFERENCES tabs(ydoc_document_name) ON DELETE CASCADE,
-
-    event_type VARCHAR(32) NOT NULL CHECK (
-        event_type IN ('load_empty', 'load_snapshot', 'save_success', 'save_failed')
-    ),
-
-    version INTEGER,
-    byte_length INTEGER,
-    error_message TEXT,
-
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Индексы для оптимизации
 CREATE INDEX  IF NOT EXISTS idx_projects_owner_id ON projects(owner_id);
 CREATE INDEX  IF NOT EXISTS idx_tabs_project_id ON tabs(project_id);
 CREATE INDEX  IF NOT EXISTS idx_tabs_ydoc_document_name ON tabs(ydoc_document_name);
 CREATE INDEX  IF NOT EXISTS idx_yjs_documents_ydoc_document_name ON yjs_documents(ydoc_document_name);
 CREATE INDEX  IF NOT EXISTS idx_project_permissions_user_id ON project_permissions(user_id);
 CREATE INDEX  IF NOT EXISTS idx_project_permissions_project_id ON project_permissions(project_id);
-CREATE INDEX IF NOT EXISTS idx_yjs_save_events_doc_name ON yjs_document_save_events(ydoc_document_name);
-CREATE INDEX IF NOT EXISTS idx_yjs_save_events_created_at ON yjs_document_save_events(created_at);

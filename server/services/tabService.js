@@ -6,10 +6,6 @@ class TabService {
         return tabRepository.findByProjectId(projectId);
     }
 
-    async getTabById(tabId) {
-        return tabRepository.findById(tabId);
-    }
-
     async getTabByIdForUser(userId, projectId, tabId) {
         await accessService.assertProjectAccess(userId, projectId);
 
@@ -45,7 +41,6 @@ class TabService {
         return tabRepository.create({
             ...tabData,
             projectId,
-            ownerId: userId,
         });
     }
 

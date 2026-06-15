@@ -1,14 +1,12 @@
-require("dotenv").config();
-
 const express = require("express");
 const http = require("http");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const swaggerJsdoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
+const env = require("./config/env");
 const { loginLimiter } = require("./middleware/rateLimiter");
 const tabsRoutes = require("./routes/tabs");
-const cookieParser = require("cookie-parser");
-
 const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
@@ -19,7 +17,7 @@ app.use(cookieParser());
 
 app.use(
     cors({
-        origin: process.env.CLIENT_URL,
+        origin: env.clientUrl,
         credentials: true,
         exposedHeaders: ["Authorization"],
     }),
@@ -45,7 +43,7 @@ const swaggerOptions = {
         },
         servers: [
             {
-                url: `http://localhost:${process.env.PORT || 5000}`,
+                url: `http://localhost:${env.port}`,
                 description: "Development server",
             },
         ],

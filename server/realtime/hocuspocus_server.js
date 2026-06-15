@@ -3,6 +3,7 @@ const { Database } = require("@hocuspocus/extension-database");
 const Y = require("yjs");
 
 const pool = require("../db");
+const logger = require("../utils/logger");
 const { getCollabAccess } = require("../services/collabAccessService");
 
 function isValidYjsState(state) {
@@ -22,7 +23,7 @@ function isValidYjsState(state) {
         doc.destroy();
         return true;
     } catch (error) {
-        console.warn("[Yjs] Invalid document state:", error.message);
+        logger.warn({ err: error }, "Invalid Yjs document state");
         return false;
     }
 }
@@ -46,17 +47,16 @@ const hocuspocusServer = new Server({
                 const row = result.rows[0];
 
                 if (!row || !row.ydoc_data) {
-                    console.log("📄 Creating new Yjs doc:", documentName);
+                    logger.info({ documentName }, "Creating Yjs document");
                     return null;
                 }
 
                 const buffer = Buffer.from(row.ydoc_data);
 
                 if (!isValidYjsState(buffer)) {
-                    console.warn(
-                        "⚠️ Found corrupted Yjs doc, deleting and creating new:",
-                        documentName,
-                        buffer.length,
+                    logger.warn(
+                        { documentName, byteLength: buffer.length },
+                        "Removing corrupted Yjs document",
                     );
 
                     await pool.query(
@@ -70,7 +70,10 @@ const hocuspocusServer = new Server({
                     return null;
                 }
 
-                console.log("📄 Loaded Yjs doc:", documentName, buffer.length);
+                logger.info(
+                    { documentName, byteLength: buffer.length },
+                    "Loaded Yjs document",
+                );
                 return buffer;
             },
 
@@ -78,10 +81,9 @@ const hocuspocusServer = new Server({
                 const buffer = Buffer.from(state || []);
 
                 if (!isValidYjsState(buffer)) {
-                    console.warn(
-                        "⚠️ Skip storing invalid Yjs state:",
-                        documentName,
-                        buffer.length,
+                    logger.warn(
+                        { documentName, byteLength: buffer.length },
+                        "Skipped invalid Yjs state",
                     );
                     return;
                 }
@@ -112,13 +114,13 @@ const hocuspocusServer = new Server({
 
                 const saved = result.rows[0];
 
-                console.log(
-                    "💾 Stored Yjs doc:",
-                    documentName,
-                    "version:",
-                    saved.version,
-                    "bytes:",
-                    saved.byte_length,
+                logger.info(
+                    {
+                        documentName,
+                        version: saved.version,
+                        byteLength: saved.byte_length,
+                    },
+                    "Stored Yjs document",
                 );
             },
         }),
@@ -130,15 +132,14 @@ const hocuspocusServer = new Server({
             documentName: data.documentName,
         });
 
-        console.log(
-            "🔐 REALTIME AUTH",
-            data.documentName,
-            "user:",
-            access.user.id,
-            "role:",
-            access.role,
-            "canWrite:",
-            access.canWrite,
+        logger.info(
+            {
+                documentName: data.documentName,
+                userId: access.user.id,
+                role: access.role,
+                canWrite: access.canWrite,
+            },
+            "Realtime access granted",
         );
 
         return {

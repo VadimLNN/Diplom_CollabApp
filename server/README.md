@@ -74,8 +74,7 @@ Hocuspocus запускается отдельным процессом и пр�
 - `projects`;
 - `project_permissions`;
 - `tabs`;
-- `yjs_documents`;
-- `yjs_document_save_events`.
+- `yjs_documents`.
 
 Поддерживаемые типы вкладок: `text` и `board`.
 
@@ -84,6 +83,14 @@ Hocuspocus запускается отдельным процессом и пр�
 
 `npm run db:init` создает отсутствующие таблицы, но не является системой
 миграций для уже существующей базы.
+
+После этого cleanup в новой схеме больше нет таблицы
+`yjs_document_save_events`. В существующей базе она останется до ручного
+удаления:
+
+```sql
+DROP TABLE IF EXISTS yjs_document_save_events;
+```
 
 ## Переменные окружения
 
@@ -103,7 +110,6 @@ DB_PORT=5432
 DB_USER=postgres
 DB_PASSWORD=postgres
 DB_DATABASE=diplom_db
-DB_TEST_DATABASE=diplom_db_test
 ```
 
 Для подключения к PostgreSQL также поддерживается `DATABASE_URL`.
@@ -134,7 +140,6 @@ npm run dev:hocuspocus
 ```bash
 npm start
 npm run hocuspocus
-npm test
 npm run scan:all
 ```
 

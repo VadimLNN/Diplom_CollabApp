@@ -21,11 +21,6 @@ class AccessService {
         return permission ? permission.role : null;
     }
 
-    async canAccessProject(userId, projectId) {
-        const role = await this.getUserRoleInProject(userId, projectId);
-        return Boolean(role);
-    }
-
     async assertProjectAccess(userId, projectId) {
         const role = await this.getUserRoleInProject(userId, projectId);
 

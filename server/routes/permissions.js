@@ -7,6 +7,7 @@ const checkProjectAccess = require("../middleware/checkProjectAccess");
 const { hasRole } = require("../middleware/checkRole");
 
 const permissionService = require("../services/permissionService");
+const logger = require("../utils/logger");
 
 router.use(authMiddleware);
 
@@ -37,13 +38,17 @@ router.use(authMiddleware);
  *       403:
  *         description: Доступ к проекту запрещен.
  */
-// GET / - Получить список участников
 router.get("/", checkProjectAccess, async (req, res) => {
     try {
-        const members = await permissionService.getProjectMembers(req.params.projectId);
+        const members = await permissionService.getProjectMembers(
+            req.params.projectId,
+        );
         res.json(members);
     } catch (error) {
-        console.error("Route error fetching members:", error);
+        logger.error(
+            { err: error, projectId: req.params.projectId },
+            "Failed to fetch project members",
+        );
         res.status(500).json({ error: "Failed to fetch project members" });
     }
 });
@@ -76,23 +81,32 @@ router.get("/", checkProjectAccess, async (req, res) => {
  *       403:
  *         description: Доступ к проекту запрещен.
  */
-// GET /my-role - Получить свою роль
 router.get("/my-role", checkProjectAccess, async (req, res) => {
     try {
-        const role = await permissionService.getUserRole(req.user.id, req.params.projectId);
+        const role = await permissionService.getUserRole(
+            req.user.id,
+            req.params.projectId,
+        );
 
-        // --- ИСПРАВЛЕНИЕ ЗДЕСЬ ---
         if (role) {
             res.json({ role });
         } else {
-            // Эта ситуация странная (checkProjectAccess прошел, а роль не нашли),
-            // но мы должны ее обработать.
-            res.status(404).json({ error: "Role for this user in this project not found." });
+            res.status(404).json({
+                error: "Role for this user in this project not found.",
+            });
         }
     } catch (error) {
-        // Сюда мы попадем, если getUserRoleInProject выбросит ошибку
-        console.error("Error in /my-role route:", error);
-        res.status(500).json({ error: "Could not determine user role due to a server error." });
+        logger.error(
+            {
+                err: error,
+                projectId: req.params.projectId,
+                userId: req.user.id,
+            },
+            "Failed to determine project role",
+        );
+        res.status(500).json({
+            error: "Could not determine user role due to a server error.",
+        });
     }
 });
 
@@ -136,13 +150,13 @@ router.get("/my-role", checkProjectAccess, async (req, res) => {
  *       409:
  *         description: Этот пользователь уже в проекте.
  */
-// POST / - Пригласить пользователя
 router.post(
     "/",
     hasRole(["owner"]),
-    // --- ПРАВИЛА ВАЛИДАЦИИ ---
     body("email").isEmail().withMessage("Please provide a valid email address"),
-    body("role").isIn(["editor", "viewer"]).withMessage("Role must be either 'editor' or 'viewer'"),
+    body("role")
+        .isIn(["editor", "viewer"])
+        .withMessage("Role must be either 'editor' or 'viewer'"),
     async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -150,12 +164,15 @@ router.post(
         }
 
         try {
-            const newPermission = await permissionService.inviteUser(req.params.projectId, req.user.id, req.body);
+            const newPermission = await permissionService.inviteUser(
+                req.params.projectId,
+                req.body,
+            );
             res.status(201).json(newPermission);
         } catch (error) {
             res.status(error.statusCode || 500).json({ error: error.message });
         }
-    }
+    },
 );
 
 /**
@@ -183,11 +200,15 @@ router.post(
  *       403:
  *         description: Нет прав для удаления (не владелец).
  */
-// DELETE /:userId - Удалить участника
 router.delete("/:userId", hasRole(["owner"]), async (req, res) => {
     try {
-        await permissionService.removeUser(req.params.projectId, req.params.userId);
-        res.status(200).json({ message: "User removed from project successfully" });
+        await permissionService.removeUser(
+            req.params.projectId,
+            req.params.userId,
+        );
+        res.status(200).json({
+            message: "User removed from project successfully",
+        });
     } catch (error) {
         res.status(error.statusCode || 500).json({ error: error.message });
     }

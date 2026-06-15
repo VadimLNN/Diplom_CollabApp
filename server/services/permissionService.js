@@ -24,7 +24,7 @@ class PermissionService {
         return accessService.getUserRoleInProject(userId, projectId);
     }
 
-    async inviteUser(projectId, inviterId, { email, role }) {
+    async inviteUser(projectId, { email, role }) {
         if (!email || !role || !["editor", "viewer"].includes(role)) {
             const error = new Error(
                 "User email and a valid role ('editor' or 'viewer') are required",

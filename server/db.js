@@ -1,24 +1,19 @@
 const { Pool } = require("pg");
-require("dotenv").config();
+const env = require("./config/env");
 const logger = require("./utils/logger");
 
-const isTestEnvironment = process.env.NODE_ENV === "test";
-const databaseName = isTestEnvironment
-    ? process.env.DB_TEST_DATABASE
-    : process.env.DB_DATABASE;
-
 const pool = new Pool(
-    process.env.DATABASE_URL
+    env.databaseUrl
         ? {
-              connectionString: process.env.DATABASE_URL,
+              connectionString: env.databaseUrl,
               ssl: { rejectUnauthorized: false },
           }
         : {
-              host: process.env.DB_HOST || "dpg-d66rmc248b3s73curktg-a",
-              user: process.env.DB_USER || "backend_db_user",
-              password: process.env.DB_PASSWORD || "",
-              database: process.env.DB_DATABASE || "diplom_db",
-              port: process.env.DB_PORT || 5432,
+              host: env.db.host,
+              user: env.db.user,
+              password: env.db.password,
+              database: env.db.database,
+              port: env.db.port,
           },
 );
 

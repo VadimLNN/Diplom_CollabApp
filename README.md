@@ -72,7 +72,6 @@ DB_PORT=5432
 DB_USER=postgres
 DB_PASSWORD=postgres
 DB_DATABASE=diplom_db
-DB_TEST_DATABASE=diplom_db_test
 ```
 
 Вместо набора `DB_*` можно использовать `DATABASE_URL`.
