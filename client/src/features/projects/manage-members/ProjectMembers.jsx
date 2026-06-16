@@ -17,6 +17,7 @@ const ProjectMembers = ({ projectId, userRole }) => {
     const [isInviting, setIsInviting] = useState(false);
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [selectedRole, setSelectedRole] = useState("editor");
+    const [updatingRoleUserId, setUpdatingRoleUserId] = useState(null);
 
     const fetchMembers = useCallback(async () => {
         try {
@@ -131,6 +132,47 @@ const ProjectMembers = ({ projectId, userRole }) => {
         );
     };
 
+    const handleRoleChange = async (member, role) => {
+        if (member.role === role) return;
+
+        const previousRole = member.role;
+
+        setMembers((currentMembers) =>
+            currentMembers.map((currentMember) =>
+                currentMember.id === member.id
+                    ? { ...currentMember, role }
+                    : currentMember,
+            ),
+        );
+
+        try {
+            setUpdatingRoleUserId(member.id);
+
+            await api.patch(
+                `/projects/${projectId}/permissions/${member.id}`,
+                { role },
+            );
+
+            toast.success(
+                `Роль ${member.username} изменена на ${roleLabels[role]}`,
+            );
+        } catch (err) {
+            setMembers((currentMembers) =>
+                currentMembers.map((currentMember) =>
+                    currentMember.id === member.id
+                        ? { ...currentMember, role: previousRole }
+                        : currentMember,
+                ),
+            );
+
+            toast.error(
+                err.response?.data?.error || "Не удалось изменить роль",
+            );
+        } finally {
+            setUpdatingRoleUserId(null);
+        }
+    };
+
     if (isLoading) {
         return (
             <Card>
@@ -209,15 +251,41 @@ const ProjectMembers = ({ projectId, userRole }) => {
                                 </div>
 
                                 <div className="member-list__actions">
-                                    <span
-                                        className={`badge ${
-                                            member.role === "owner"
-                                                ? "badge--accent"
-                                                : "badge--neutral"
-                                        }`}
-                                    >
-                                        {roleLabels[member.role] || member.role}
-                                    </span>
+                                    {userRole === "owner" &&
+                                    member.role !== "owner" ? (
+                                        <select
+                                            className="field__control member-list__role-select"
+                                            value={member.role}
+                                            onChange={(event) =>
+                                                handleRoleChange(
+                                                    member,
+                                                    event.target.value,
+                                                )
+                                            }
+                                            disabled={
+                                                updatingRoleUserId === member.id
+                                            }
+                                            aria-label={`Роль ${member.username}`}
+                                        >
+                                            <option value="viewer">
+                                                Наблюдатель
+                                            </option>
+                                            <option value="editor">
+                                                Редактор
+                                            </option>
+                                        </select>
+                                    ) : (
+                                        <span
+                                            className={`badge ${
+                                                member.role === "owner"
+                                                    ? "badge--accent"
+                                                    : "badge--neutral"
+                                            }`}
+                                        >
+                                            {roleLabels[member.role] ||
+                                                member.role}
+                                        </span>
+                                    )}
 
                                     {userRole === "owner" &&
                                         member.role !== "owner" && (
