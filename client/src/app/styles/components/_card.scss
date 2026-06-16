@@ -378,6 +378,12 @@
     gap: var(--space-3);
 }
 
+.member-list__role-select {
+    min-height: 40px;
+    width: 168px;
+    border-radius: var(--radius-2);
+}
+
 @media (max-width: 767px) {
     .member-list__item,
     .card__footer {
@@ -407,5 +413,10 @@
 
     .member-list__actions {
         justify-content: space-between;
+    }
+
+    .member-list__role-select {
+        flex: 1;
+        width: auto;
     }
 }

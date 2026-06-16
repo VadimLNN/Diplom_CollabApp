@@ -74,6 +74,37 @@ class PermissionService {
         }
         return permissionRepository.remove(projectId, userIdToRemove);
     }
+
+    async updateUserRole(projectId, userIdToUpdate, role) {
+        if (!["editor", "viewer"].includes(role)) {
+            const error = new Error(
+                "A valid role ('editor' or 'viewer') is required",
+            );
+            error.statusCode = 400;
+            throw error;
+        }
+
+        const project = await projectRepository.findById(projectId);
+        if (String(project.owner_id) === String(userIdToUpdate)) {
+            const error = new Error("Project owner role cannot be changed.");
+            error.statusCode = 400;
+            throw error;
+        }
+
+        const updatedPermission = await permissionRepository.updateRole(
+            projectId,
+            userIdToUpdate,
+            role,
+        );
+
+        if (!updatedPermission) {
+            const error = new Error("Project member not found.");
+            error.statusCode = 404;
+            throw error;
+        }
+
+        return updatedPermission;
+    }
 }
 
 module.exports = new PermissionService();

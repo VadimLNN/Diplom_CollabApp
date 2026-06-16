@@ -27,6 +27,18 @@ class PermissionRepository {
         );
     }
 
+    async updateRole(projectId, userId, role) {
+        const { rows } = await pool.query(
+            `UPDATE project_permissions
+             SET role = $3
+             WHERE project_id = $1 AND user_id = $2
+             RETURNING *`,
+            [projectId, userId, role],
+        );
+
+        return rows[0];
+    }
+
     async findByProjectAndUser(projectId, userId) {
         const { rows } = await pool.query(
             `SELECT *

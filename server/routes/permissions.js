@@ -178,6 +178,72 @@ router.post(
 /**
  * @swagger
  * /api/projects/{projectId}/permissions/{userId}:
+ *   patch:
+ *     summary: Изменить роль участника проекта (только для владельца)
+ *     tags: [Permissions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: projectId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [role]
+ *             properties:
+ *               role:
+ *                 type: string
+ *                 enum: [editor, viewer]
+ *                 example: "viewer"
+ *     responses:
+ *       200:
+ *         description: Роль участника успешно изменена.
+ *       400:
+ *         description: Некорректная роль или попытка изменить владельца.
+ *       403:
+ *         description: Нет прав для изменения роли.
+ *       404:
+ *         description: Участник проекта не найден.
+ */
+router.patch(
+    "/:userId",
+    hasRole(["owner"]),
+    body("role")
+        .isIn(["editor", "viewer"])
+        .withMessage("Role must be either 'editor' or 'viewer'"),
+    async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        try {
+            const updatedPermission = await permissionService.updateUserRole(
+                req.params.projectId,
+                req.params.userId,
+                req.body.role,
+            );
+            res.json(updatedPermission);
+        } catch (error) {
+            res.status(error.statusCode || 500).json({ error: error.message });
+        }
+    },
+);
+
+/**
+ * @swagger
+ * /api/projects/{projectId}/permissions/{userId}:
  *   delete:
  *     summary: Удалить пользователя из проекта (только для владельца)
  *     tags: [Permissions]
