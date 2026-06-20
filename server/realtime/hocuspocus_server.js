@@ -142,7 +142,7 @@ const hocuspocusServer = new Server({
             "Realtime access granted",
         );
 
-        data.connection.readOnly = !access.canWrite;
+        data.connectionConfig.readOnly = !access.canWrite;
 
         return {
             user: access.user,

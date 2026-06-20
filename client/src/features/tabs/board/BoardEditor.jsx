@@ -153,7 +153,16 @@ const BoardEditor = ({ tab, canEdit, projectTabs = [] }) => {
         (targetTab) => {
             const selectedElement = getSelectedBoardElement();
 
-            if (!provider || !selectedElement || !targetTab) {
+            if (!targetTab) {
+                return;
+            }
+
+            if (!selectedElement) {
+                setCopiedElementNotice("Сначала выберите один элемент на доске.");
+                return;
+            }
+
+            if (!provider) {
                 return;
             }
 
@@ -275,7 +284,7 @@ const BoardEditor = ({ tab, canEdit, projectTabs = [] }) => {
                     {connected ? "Подключено" : "Нет подключения"}
                 </span>
 
-                {canEdit && selectedBoardElement && (
+                {canEdit && (
                     <div className="board-link-tools">
                         {copiedElementNotice && (
                             <span className="board-link-tools__notice">
