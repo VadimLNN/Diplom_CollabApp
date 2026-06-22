@@ -10,47 +10,72 @@ import { AuthContext } from "./authContext";
 
 const getStoredToken = () => {
     try {
-        const token = localStorage.getItem("token");
-        if (token) {
-            const decoded = jwtDecode(token);
-            if (decoded.exp * 1000 > Date.now()) {
-                return token;
-            }
-        }
-        localStorage.removeItem("token");
-        return null;
+        return localStorage.getItem("token");
     } catch {
-        localStorage.removeItem("token");
         return null;
     }
+};
+
+const isAccessTokenFresh = (token) => {
+    if (!token) {
+        return false;
+    }
+
+    try {
+        const decoded = jwtDecode(token);
+        return decoded.exp * 1000 > Date.now();
+    } catch {
+        return false;
+    }
+};
+
+const isRejectedSessionError = (error) => {
+    const status = error.response?.status;
+    return status === 401 || status === 403 || status === 404;
 };
 
 export const AuthProvider = ({ children }) => {
     const [token, setToken] = useState(getStoredToken);
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [status, setStatus] = useState("checking");
+    const [authError, setAuthError] = useState(null);
 
     useEffect(() => {
-        if (!token) {
-            setLoading(false);
-            return;
-        }
-
         const initialize = async () => {
+            const storedToken = getStoredToken();
+            let accessToken = storedToken;
+
             try {
+                if (!isAccessTokenFresh(accessToken)) {
+                    const refreshResponse = await api.post("/auth/refresh");
+                    accessToken = refreshResponse.data.token;
+                    localStorage.setItem("token", accessToken);
+                    setToken(accessToken);
+                }
+
                 const response = await api.get("/auth/user");
                 setUser(response.data);
+                setStatus("authenticated");
+                setAuthError(null);
             } catch (error) {
                 console.error("Auth initialization failed:", error);
-                setToken(null);
-                localStorage.removeItem("token");
-            } finally {
-                setLoading(false);
+
+                if (isRejectedSessionError(error)) {
+                    localStorage.removeItem("token");
+                    setToken(null);
+                    setUser(null);
+                    setStatus("unauthenticated");
+                    setAuthError(null);
+                    return;
+                }
+
+                setStatus("unavailable");
+                setAuthError(error);
             }
         };
 
         initialize();
-    }, [token]);
+    }, []);
 
     const login = useCallback(async (credentials) => {
         try {
@@ -62,6 +87,8 @@ export const AuthProvider = ({ children }) => {
             localStorage.setItem("token", newToken);
             setToken(newToken);
             setUser({ id: decodedUser.id, username: decodedUser.username });
+            setStatus("authenticated");
+            setAuthError(null);
 
             return true;
         } catch (error) {
@@ -79,18 +106,24 @@ export const AuthProvider = ({ children }) => {
             localStorage.removeItem("token");
             setToken(null);
             setUser(null);
+            setStatus("unauthenticated");
+            setAuthError(null);
         }
     }, []);
+
+    const loading = status === "checking";
 
     const contextValue = useMemo(
         () => ({
             token,
             user,
+            status,
             loading,
+            authError,
             login,
             logout,
         }),
-        [token, user, loading, login, logout],
+        [token, user, status, loading, authError, login, logout],
     );
 
     return (

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../app/providers/authContext";
 
 const LoginForm = () => {
@@ -8,8 +8,14 @@ const LoginForm = () => {
     const [password, setPassword] = useState("");
     const { login } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const usernameInputRef = useRef(null);
+    const from = location.state?.from;
+    const redirectTo =
+        from?.pathname && from.pathname !== "/login"
+            ? `${from.pathname}${from.search || ""}${from.hash || ""}`
+            : "/projects";
 
     useEffect(() => {
         if (usernameInputRef.current) {
@@ -26,7 +32,7 @@ const LoginForm = () => {
         await toast.promise(login({ username: normalizedUsername, password }), {
             loading: "Выполняется вход...",
             success: () => {
-                navigate("/projects");
+                navigate(redirectTo, { replace: true });
                 return <b>С возвращением!</b>;
             },
             error: (error) => (

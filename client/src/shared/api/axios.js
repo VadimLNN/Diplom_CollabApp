@@ -34,8 +34,11 @@ api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
+        const isRefreshRequest = originalRequest?.url === "/auth/refresh";
 
         if (
+            originalRequest &&
+            !isRefreshRequest &&
             error.response?.status === 401 &&
             error.response?.data?.code === "ACCESS_TOKEN_EXPIRED" &&
             !originalRequest._retry
@@ -66,7 +69,13 @@ api.interceptors.response.use(
                 return api(originalRequest);
             } catch (refreshError) {
                 processQueue(refreshError, null);
-                localStorage.removeItem("token");
+
+                if (
+                    refreshError.response?.status === 401 ||
+                    refreshError.response?.status === 403
+                ) {
+                    localStorage.removeItem("token");
+                }
 
                 return Promise.reject(refreshError);
             } finally {
