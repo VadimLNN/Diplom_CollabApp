@@ -1,14 +1,23 @@
 const projectRepository = require("../repositories/projectRepository");
 const permissionRepository = require("../repositories/permissionRepository");
 
+const createAccessError = (statusCode, code, message) => {
+    const error = new Error(message);
+    error.statusCode = statusCode;
+    error.code = code;
+    return error;
+};
+
 class AccessService {
     async getUserRoleInProject(userId, projectId) {
         const project = await projectRepository.findById(projectId);
 
         if (!project) {
-            const error = new Error("Project not found");
-            error.statusCode = 404;
-            throw error;
+            throw createAccessError(
+                404,
+                "PROJECT_NOT_FOUND",
+                "Project not found",
+            );
         }
 
         if (String(project.owner_id) === String(userId)) {
@@ -27,9 +36,11 @@ class AccessService {
         const role = await this.getUserRoleInProject(userId, projectId);
 
         if (!role) {
-            const error = new Error("Forbidden: No access to this project.");
-            error.statusCode = 403;
-            throw error;
+            throw createAccessError(
+                403,
+                "PROJECT_FORBIDDEN",
+                "Forbidden: No access to this project.",
+            );
         }
 
         return role;
@@ -39,9 +50,11 @@ class AccessService {
         const role = await this.getUserRoleInProject(userId, projectId);
 
         if (!role || !allowedRoles.includes(role)) {
-            const error = new Error("Forbidden: Insufficient permissions.");
-            error.statusCode = 403;
-            throw error;
+            throw createAccessError(
+                403,
+                "PROJECT_FORBIDDEN",
+                "Forbidden: Insufficient permissions.",
+            );
         }
 
         return role;

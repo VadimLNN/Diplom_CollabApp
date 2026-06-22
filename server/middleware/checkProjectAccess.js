@@ -5,11 +5,17 @@ const checkProjectAccess = async (req, res, next) => {
     const userId = req.user?.id;
 
     if (!userId) {
-        return res.status(401).json({ error: "Authentication required" });
+        return res.status(401).json({
+            error: "UNAUTHORIZED",
+            message: "Authentication required",
+        });
     }
 
     if (!projectId) {
-        return res.status(400).json({ error: "Project ID missing" });
+        return res.status(400).json({
+            error: "VALIDATION_ERROR",
+            message: "Project ID missing",
+        });
     }
 
     try {
@@ -19,10 +25,17 @@ const checkProjectAccess = async (req, res, next) => {
 
         return next();
     } catch (error) {
-        return res.status(error.statusCode || 500).json({
-            error: error.statusCode
-                ? error.message
-                : "Server error checking access",
+        const statusCode = error.statusCode || 500;
+        const message = error.statusCode
+            ? error.message
+            : "Server error checking access";
+
+        return res.status(statusCode).json({
+            error:
+                statusCode === 500
+                    ? "INTERNAL_ERROR"
+                    : error.code || error.message,
+            message,
         });
     }
 };

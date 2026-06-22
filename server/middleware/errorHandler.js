@@ -12,8 +12,14 @@ module.exports = (err, req, res, next) => {
     );
 
     const statusCode = err.statusCode || 500;
+    const message =
+        statusCode === 500 ? "Internal server error" : err.message;
 
     res.status(statusCode).json({
-        error: statusCode === 500 ? "Internal server error" : err.message,
+        error:
+            statusCode === 500
+                ? "INTERNAL_ERROR"
+                : err.code || err.message,
+        message,
     });
 };

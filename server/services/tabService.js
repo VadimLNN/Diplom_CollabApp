@@ -1,23 +1,64 @@
 const tabRepository = require("../repositories/tabRepository");
 const accessService = require("./accessService");
 
+const createTabError = (statusCode, code, message) => {
+    const error = new Error(message);
+    error.statusCode = statusCode;
+    error.code = code;
+    return error;
+};
+
 class TabService {
     async getTabsForProject(projectId) {
         return tabRepository.findByProjectId(projectId);
     }
 
     async getTabByIdForUser(userId, projectId, tabId) {
-        await accessService.assertProjectAccess(userId, projectId);
-
         const tab = await tabRepository.findById(tabId);
 
         if (!tab || String(tab.project_id) !== String(projectId)) {
-            const error = new Error("Tab not found");
-            error.statusCode = 404;
-            throw error;
+            throw createTabError(404, "TAB_NOT_FOUND", "Tab not found");
         }
 
+        await this.assertTabAccess(userId, tab.project_id);
+
         return tab;
+    }
+
+    async assertTabAccess(userId, projectId) {
+        try {
+            return await accessService.assertProjectAccess(userId, projectId);
+        } catch (error) {
+            if (error.statusCode === 403) {
+                throw createTabError(
+                    403,
+                    "TAB_FORBIDDEN",
+                    "Forbidden: No access to this tab.",
+                );
+            }
+
+            throw error;
+        }
+    }
+
+    async assertTabRole(userId, projectId, allowedRoles) {
+        try {
+            return await accessService.assertProjectRole(
+                userId,
+                projectId,
+                allowedRoles,
+            );
+        } catch (error) {
+            if (error.statusCode === 403) {
+                throw createTabError(
+                    403,
+                    "TAB_FORBIDDEN",
+                    "Forbidden: Insufficient permissions for this tab.",
+                );
+            }
+
+            throw error;
+        }
     }
 
     async createTab(userId, projectId, tabData) {
@@ -49,16 +90,14 @@ class TabService {
         });
     }
 
-    async updateTab(userId, tabId, tabData) {
+    async updateTab(userId, projectId, tabId, tabData) {
         const tab = await tabRepository.findById(tabId);
 
-        if (!tab) {
-            const error = new Error("Tab not found");
-            error.statusCode = 404;
-            throw error;
+        if (!tab || String(tab.project_id) !== String(projectId)) {
+            throw createTabError(404, "TAB_NOT_FOUND", "Tab not found");
         }
 
-        await accessService.assertProjectRole(userId, tab.project_id, [
+        await this.assertTabRole(userId, tab.project_id, [
             "owner",
             "editor",
         ]);
@@ -98,18 +137,14 @@ class TabService {
         });
     }
 
-    async deleteTab(userId, tabId) {
+    async deleteTab(userId, projectId, tabId) {
         const tab = await tabRepository.findById(tabId);
 
-        if (!tab) {
-            const error = new Error("Tab not found");
-            error.statusCode = 404;
-            throw error;
+        if (!tab || String(tab.project_id) !== String(projectId)) {
+            throw createTabError(404, "TAB_NOT_FOUND", "Tab not found");
         }
 
-        await accessService.assertProjectRole(userId, tab.project_id, [
-            "owner",
-        ]);
+        await this.assertTabRole(userId, tab.project_id, ["owner"]);
 
         return tabRepository.delete(tabId);
     }
