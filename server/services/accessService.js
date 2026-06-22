@@ -6,7 +6,9 @@ class AccessService {
         const project = await projectRepository.findById(projectId);
 
         if (!project) {
-            return null;
+            const error = new Error("Project not found");
+            error.statusCode = 404;
+            throw error;
         }
 
         if (String(project.owner_id) === String(userId)) {

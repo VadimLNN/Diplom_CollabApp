@@ -28,8 +28,10 @@ const hasRole = (allowedRoles) => {
 
             return next();
         } catch (error) {
-            return res.status(500).json({
-                error: "Server error checking role",
+            return res.status(error.statusCode || 500).json({
+                error: error.statusCode
+                    ? error.message
+                    : "Server error checking role",
             });
         }
     };

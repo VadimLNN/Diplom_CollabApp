@@ -28,6 +28,50 @@ const getInitialTabSort = () => {
     return VALID_TAB_SORTS.has(savedSort) ? savedSort : DEFAULT_TAB_SORT;
 };
 
+const getRequestStatus = (error) => {
+    if (!error.response) {
+        return "networkError";
+    }
+
+    const status = error.response.status;
+
+    if (status === 401) {
+        return "unauthorized";
+    }
+
+    if (status === 403) {
+        return "forbidden";
+    }
+
+    if (status === 404) {
+        return "notFound";
+    }
+
+    if (status >= 500) {
+        return "serverError";
+    }
+
+    return "error";
+};
+
+const projectStatusMessages = {
+    unauthorized: "Не удалось подтвердить сессию. Обновите страницу.",
+    forbidden: "Нет доступа к проекту.",
+    notFound: "Проект не найден.",
+    networkError: "Сервер временно недоступен. Попробуйте позже.",
+    serverError: "Ошибка сервера при загрузке проекта.",
+    error: "Не удалось загрузить данные проекта.",
+};
+
+const tabsStatusMessages = {
+    unauthorized: "Не удалось подтвердить сессию. Обновите страницу.",
+    forbidden: "Нет доступа к вкладкам проекта.",
+    notFound: "Вкладки проекта не найдены.",
+    networkError: "Сервер временно недоступен. Не удалось загрузить вкладки.",
+    serverError: "Ошибка сервера при загрузке вкладок.",
+    error: "Не удалось загрузить вкладки проекта.",
+};
+
 const ProjectDetailPage = () => {
     const { projectId } = useParams();
     const [activeTab, setActiveTab] = useState("tabs");
@@ -35,8 +79,8 @@ const ProjectDetailPage = () => {
     const [project, setProject] = useState(null);
     const [tabs, setTabs] = useState([]);
     const [userRole, setUserRole] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState("");
+    const [projectStatus, setProjectStatus] = useState("idle");
+    const [tabsStatus, setTabsStatus] = useState("idle");
     const [isCreateTabModalOpen, setIsCreateTabModalOpen] = useState(false);
     const [editingTab, setEditingTab] = useState(null);
     const [sortBy, setSortBy] = useState(getInitialTabSort);
@@ -80,13 +124,24 @@ const ProjectDetailPage = () => {
     }, [sortBy, tabs]);
 
     const fetchData = useCallback(async () => {
-        try {
-            setIsLoading(true);
-            setError("");
+        setProjectStatus("loading");
+        setTabsStatus("idle");
+        setProject(null);
+        setTabs([]);
+        setUserRole(null);
 
+        try {
             const projectRes = await api.get(`/projects/${projectId}`);
             setProject(projectRes.data);
+            setProjectStatus("loaded");
+        } catch (err) {
+            setProjectStatus(getRequestStatus(err));
+            console.error(err);
+            return;
+        }
 
+        try {
+            setTabsStatus("loading");
             const tabsRes = await api.get(`/projects/${projectId}/tabs`);
             setTabs(
                 tabsRes.data.map((tab) => ({
@@ -94,20 +149,19 @@ const ProjectDetailPage = () => {
                     project_id: projectId,
                 })),
             );
-
-            try {
-                const roleRes = await api.get(
-                    `/projects/${projectId}/permissions/my-role`,
-                );
-                setUserRole(roleRes.data.role);
-            } catch {
-                setUserRole("viewer");
-            }
+            setTabsStatus("loaded");
         } catch (err) {
-            setError("Не удалось загрузить данные проекта.");
+            setTabsStatus(getRequestStatus(err));
             console.error(err);
-        } finally {
-            setIsLoading(false);
+        }
+
+        try {
+            const roleRes = await api.get(
+                `/projects/${projectId}/permissions/my-role`,
+            );
+            setUserRole(roleRes.data.role);
+        } catch {
+            setUserRole("viewer");
         }
     }, [projectId]);
 
@@ -146,12 +200,19 @@ const ProjectDetailPage = () => {
         setEditingTab(null);
     };
 
-    if (isLoading)
+    if (projectStatus === "idle" || projectStatus === "loading")
         return <div className={pageStyles.pageContainer}>Загрузка...</div>;
-    if (error)
+
+    if (projectStatus !== "loaded" || !project)
         return (
             <div className={pageStyles.pageContainer}>
-                <p style={{ color: "red" }}>{error}</p>
+                <p className="field__error">
+                    {projectStatusMessages[projectStatus] ||
+                        projectStatusMessages.error}
+                </p>
+                <Link to="/projects" className="button button--secondary">
+                    Вернуться к проектам
+                </Link>
             </div>
         );
 
@@ -188,7 +249,9 @@ const ProjectDetailPage = () => {
                 >
                     <span aria-hidden="true">🖥️</span>
                     Вкладки
-                    <span className="tabs-nav__count">({tabs.length})</span>
+                    <span className="tabs-nav__count">
+                        ({tabsStatus === "loaded" ? tabs.length : 0})
+                    </span>
                 </button>
 
                 <button
@@ -298,13 +361,30 @@ const ProjectDetailPage = () => {
                             </div>
                         </div>
 
-                        <TabGrid
-                            tabs={sortedTabs}
-                            onCreateClick={() => setIsCreateTabModalOpen(true)}
-                            userRole={userRole}
-                            onDeleteTab={handleDeleteTab}
-                            onEditTab={setEditingTab}
-                        />
+                        {tabsStatus === "loading" && (
+                            <p>Загрузка вкладок...</p>
+                        )}
+
+                        {tabsStatus === "loaded" && (
+                            <TabGrid
+                                tabs={sortedTabs}
+                                onCreateClick={() =>
+                                    setIsCreateTabModalOpen(true)
+                                }
+                                userRole={userRole}
+                                onDeleteTab={handleDeleteTab}
+                                onEditTab={setEditingTab}
+                            />
+                        )}
+
+                        {tabsStatus !== "idle" &&
+                            tabsStatus !== "loading" &&
+                            tabsStatus !== "loaded" && (
+                                <p className="field__error">
+                                    {tabsStatusMessages[tabsStatus] ||
+                                        tabsStatusMessages.error}
+                                </p>
+                            )}
                     </>
                 )}
 
